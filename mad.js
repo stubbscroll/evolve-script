@@ -1,9 +1,5 @@
-// script to automate MAD runs only. doesn't automate protoplasm phase, doesn't
-// perform the reset.
+// script to automate MAD runs only
 // i made this because i was bored of doing 0* setup runs
-// truepath mad not supported (script won't attempt to get 50 steel, or occupy
-// foreign powers and unify. might eventually research mutual destruction if
-// we get enough steel from ancient caches and we fanaticism'd unified)
 
 // requirements:
 // - evolve v1.4.8
@@ -12,31 +8,65 @@
 // - english locale i guess, since script compares text in some cases
 //   (governor tasks)
 
-// progression requirements:
-// - governors unlocked (otherwise the player must manually assign crates to
-//   steel, titanium, alloy etc)
-// - start with 25 steel from technophobe (otherwise the player must trade or
-//   raid for steel manually)
-// * supports servants and skilled servants
-
 // how to use:
-// - do the evolution stuff, choose genus, set challenge genes (optionally),
+// - do the protoplasm stuff, choose genus, set challenge genes (optionally),
 //   pick a race, start the run
 // - press f12 to open javascript console (in firefox and chrome at least, dunno
 //   about other browsers)
 // - copy/paste the contents of this file into the console and press enter
 
-// not yet implemented:
-// - set all crafters to sheet metal after researching it
-// - buy unicorn shrines for knowledge cap
-// - care about evil universe and authority
+// progression requirements:
+// - governors unlocked (otherwise the player must manually assign crates to
+//   steel, titanium, alloy etc)
+// - start with 25 steel from technophobe (otherwise the player must trade or
+//   raid for steel manually)
+// - some general progression (dunno how much, but technophobe is probably
+//   sufficient)
+// * supports servants and skilled servants
+
+// supported:
+// - most races, some stuff specific to some races (meditation chambers,
+//   smokehouses, balorg and no trading)
+// - can play manually while script is running, but we'll regularly get thrown
+//   out of drop-down boxes. opening modal popups manually should be ok
+
+// not supported:
+// - protoplasm phase not automated (not planned either)
+// - synth and nano races
+// - some stuff specific to some races (unicorn shrines, sacrificial altars,
+//   ocular powers, wish)
+// - truepath mad. script won't attempt to get 50 steal or occupy foreign races
+//   and unify. script may coincidally clear with steel from ancient caches if
+//   we have unified trait (seraph)
+// - authority in evil universe
+// - anything in magic universe (crystal miners might work by coincidence)
 
 // current bugs:
 // - resources->market and resources->storage: shows garbage at bottom. seems to
-//   happen in most runs. no idea why
+//   happen in most runs. no idea why. also happens without the script running,
+//   so i guess it's a side effect of preloading tabs into dom or debug mode on.
+//   can refresh page to get rid of the garbage
 
-// current very suboptimal behaviour (could be because of bugs)
-// - todo
+// current suboptimal behaviour
+// - crafters never focuses on a single resource like sheet metal.
+//   currently all crafters are divided equally among resources, which actually
+//   works fine
+// - tax rate is never changed. should at the very least set the governor
+//   task for tax-morale management
+// - doesn't craft manually without no-crafting challenge gene
+// - access to alloy is gated by building factories, and the script doesn't
+//   prioritize building a factory
+
+// TODO
+// - support some of the race-specific stuff
+// - support other types of runs:
+//   - lone survivor (for farming servants, antiplasmids, phage). it's the next
+//     thing planned since it's a short run that does very specific things
+//     which doesn't need a general system with priorities, weights etc
+//   - other prestige resource farming. at this point i guess i need that fancy
+//     general system with priorities and weighting. in particular, harmony
+//     crystal farming seems to be very impactful
+//   - pillar farming (i have 27 left and i'm bored of pillar runs)
 
 var change_government=''; // global variable to store the government we want to
                           // change to across subsequent calls (because of modal)
@@ -80,16 +110,26 @@ const MADavoidtechs=new Set([
 	'tech-demonic_infusion',
 	'tech-purify_essence',
 	'tech-protocol66',
+	'tech-incorporeal',
 	// TODO cataclysm techs, the 2 black hole techs, long-range probes,
-	// the ascension one that costs 25 phage, bomb demon lord
+	// bomb demon lord
 ]);
 
 // return production per second of a given resource
 // TODO get this in a sane format
 function get_production(resource) {
 	let fq=document.getElementById('res'+resource);
-	if(fq==null) return 0;
+	if(fq==null) return null;
 	return fq.childNodes[2].innerHTML;
+}
+
+// return current power
+// null if power not invented
+// a number otherwise
+function get_power() {
+	let q=document.getElementById('powerMeter');
+	if(q==null) return 0;
+	return parseInt(q.innerHTML);
 }
 
 // distribute workers equally among all jobs in subcategory
@@ -141,6 +181,7 @@ function assign_jobs_equally(joblist,max) {
 // TODO handle later stuff like space miners, colonists, titan colonists
 // TODO handle ship crew and other jobs that can't be assigned from civics
 // TODO this function is a hideous mess, clean up if it becomes unmaintainable
+// this function should work no matter the default job is set to in the ui
 function assign_population(eq) {
 	let q=document.getElementById('jobs'); // can this be empty? ent and mimic avian on non-trashed planet?
 	let r=document.getElementById('foundry'); // might be empty
@@ -187,9 +228,6 @@ function assign_population(eq) {
 	}
 	// adjust the number of farmers depending on storage and production
 	// TODO make this work when there are no farmers and other jobs (raiders) give food
-	// TODO handle the case where the script tries to assign more population than
-	//      we have. could theoretically happen if we still have a food deficit
-	//      with the entire population as farmers
 	let spent=0; // number of workers assigned
 	let population=evolve.global.resource[evolve.global.race.species].amount;
 	// TODO fix this, doesn't currently work
@@ -232,8 +270,9 @@ function assign_population(eq) {
 		spent+=Math.trunc(tospend/num);
 	}
 	// assign crafters. max them out
-	// the following code clicks instead of assigns in a data structure,
-	// which is inconsistent and can break horribly
+	// the following code clicks instead of assigning in a data structure,
+	// which is inconsistent and can break horribly.
+	// the problem seems to eventully fix itself as population increases
 	if(eq && evolve.global.civic.craftsman.max>0) {
 		// spread them equally
 		let active=evolve.global.civic.craftsman.max;
@@ -289,15 +328,23 @@ function assign_population(eq) {
 		let remain=Math.trunc((population-spent)/num);
 		for(job in jobs) {
 			if(jobs[job].jobtype!='basic' || job=='unemployed' || job=='farmer') continue;
+			if(jobs[job].max>=0) continue;
 			jobs[job].desired+=remain;
-			spent++;
+			spent+=remain;
 		}
 		for(job in jobs) {
 			if(population==spent) break;
 			if(jobs[job].jobtype!='basic' || job=='unemployed' || job=='farmer') continue;
+			if(jobs[job].max>=0) continue;
 			jobs[job].desired++;
 			spent++;
 		}
+	}
+	// if we have unspent population, dump the rest on farmers
+	// (can happen with ent on non-trashed planet)
+	if(population-spent>0 && 'farmer' in jobs) {
+		console.log('dumped on farmers');
+		jobs['farmer'].desired+=population-spent;
 	}
 	// perform the distribution. loop once to remove, then loop again to add
 	// (should work independently of what the default job is)
@@ -386,14 +433,16 @@ function build_crate() {
 
 function MAD_bot() {
 	let race=evolve.global.race;
-	// spawned modals from previous call must be handled before everything else
-	// if we spawned change government modal, change government now
+	// spawned modals from previous call must be handled before everything else.
+	// if script spawned change government modal, change government.
+	// if the user spawned the modal (change_government not set), ignore it
 	{
 		let q=document.getElementById('govModal');
-		if(q!=null && evolve.global.civic.govern.type!=change_government) {
+		if(q!=null && change_government!='' && evolve.global.civic.govern.type!=change_government) {
 			for(let i=0;i<q.childNodes.length;i++) {
 				if(q.childNodes[i].getAttribute('data-gov')==change_government) {
 					q.childNodes[i].click();
+					change_government=''; 
 					return;
 				}
 			}
@@ -448,6 +497,21 @@ function MAD_bot() {
 			}
 		}
 	}
+	// for nano: set nanite factory to eat some of our resources
+	if(evolve.global.city.hasOwnProperty('nanite_factory')) {
+		let q=document.getElementById('NFactoryRes');
+		// put 50 in stone for now
+		if(q!=null && evolve.global.city.nanite_factory.Stone==0) {
+			let r=null;
+			for(let i=1;;i+=3) {
+				if(q.childNodes[i].className=='current Stone') {
+					r=q.childNodes[i+1];
+					break;
+				}
+			}
+			for(let i=0;i<50;i++) r.click();
+		}
+	}
 	// set governor to educator as soon as we can
 	{
 		let q=document.getElementById('candidates');
@@ -471,6 +535,8 @@ function MAD_bot() {
 		}
 	}
 	// set governor crate construction and management tasks
+	// TODO set auto tax task as well
+	// TODO rewrite this code to be more general
 	{
 		let q=document.getElementById('govOffice');
 		if(q!=null) {
@@ -532,17 +598,60 @@ function MAD_bot() {
 			}
 		}
 	}
-	// synth race needs to build population
+	// fungi: build compost heap when food production is negative
+	if(get_production('Food').substring(0,1)=='-') {
+		if(build_city(['compost'])) return;
+	}
+	// corner case on unstable planets when we have iron early: build more mines
+	// if iron production is negative because of wrought iron crafters
+	if(get_production('Iron').substring(0,1)=='-') {
+		if(build_city(['mine'])) return;
+	}
+	// synth needs to build transmitters if wireless production aka food is negative
+	if(evolve.global.race.hasOwnProperty('powered')) {
+		if(get_production('Food').substring(0,1)=='-') {
+			if(build_city(['transmitter'])) return;
+		}
+	}
+	// synth and nano races need to build population
+	// don't do it if wireless signal (=food) is negative
 	{
 		let q=document.getElementById('city-assembly');
 		if(q!=null) {
-			if(q.className=='action vb' && evolve.global.resource[race.species].amount<evolve.global.resource[race.species].max) {
-				q.__vue__.action();
-				return;
+			// wireless signal is food renamed
+			if(get_production('Food').substring(0,1)!='-') {
+				let canbuild=true;
+				// this button doesn't always light up when buildable,
+				// so compare cost with our stock of resources.
+				if(q.className!='action vb') {
+					let r=q.firstChild.getAttributeNames();
+					for(let i=0;i<r.length;i++) if(r[i].substring(0,5)=='data-') {
+						// check if we can afford
+						// the following code is disgusting, find a better way later
+						let resource=r[i].substring(5);
+						let toupper=resource.charAt(0).toUpperCase()+resource.substring(1);
+						let cost=parseInt(q.firstChild.getAttribute(r[i]));
+						if(!evolve.global.resource.hasOwnProperty(toupper) || evolve.global.resource[toupper].amount<cost) {
+							canbuild=false;
+							break;
+						}
+					}
+				}
+				if((q.className=='action vb' || canbuild) && evolve.global.resource[race.species].amount<evolve.global.resource[race.species].max) {
+					q.__vue__.action();
+					return;
+				}
 			}
 		}
 	}
-	// TODO synth needs to build transmitters
+	// synth is more likely to have aluminium deficit. build metal refinery
+	// (all races can technically trigger this, but it's unlikely)
+	{
+		let a=get_production('Aluminium');
+		if(a!=null && a.substring(0,1)=='-') {
+			if(build_city(['metal_refinery'])) return;
+		}
+	}
 	// assign servants equally. could be smarter, but whatever
 	if(evolve.global.race.hasOwnProperty('servants')) assign_jobs_equally(document.getElementById('servants'),evolve.global.race.servants.max);
 	// assign skilled servants equally
@@ -616,6 +725,7 @@ function MAD_bot() {
 
 	// if we have discovered titanium but don't have hunter process: trade for
 	// titanium
+	// TODO check money income and set a sensible number of trade routes
 	if(evolve.global.resource.Titanium.display) {
 		let q=document.getElementById('market-Titanium');
 		let r=getchildbyclassname(q,'trade');
@@ -623,11 +733,10 @@ function MAD_bot() {
 			if(num_traderoutes('Titanium')==0) {
 				// very arbitratily set number of trade routes
 				// TODO set a more sensible number if i can get money production
-				let r=getchildbyclassname(q,'trade');
 				for(let i=0;i<10;i++) r.childNodes[3].childNodes[1].firstChild.click();
 			}
 			// if we lose money, remove some trade routes
-			if(get_production('Money')<0) r.childNodes[1].childNodes[1].firstChild.click();
+			if(get_production('Money').substring(0,1)=='-') r.childNodes[1].childNodes[1].firstChild.click();
 		} else {
 			// we have hunter process, cancel titanium trade routes
 			if(num_traderoutes('Titanium')>0) r.childNodes[4].click();
@@ -644,7 +753,7 @@ function MAD_bot() {
 				for(let i=0;i<20;i++) r.childNodes[3].childNodes[1].firstChild.click();
 			}
 			// if we lose money, remove some trade routes
-			if(get_production('Money')<0) r.childNodes[1].childNodes[1].firstChild.click();
+			if(get_production('Money').substring(0,1)=='-') r.childNodes[1].childNodes[1].firstChild.click();
 		} else {
 			// we have hunter process, cancel titanium trade routes
 			if(num_traderoutes('Alloy')>0) r.childNodes[4].click();
@@ -661,7 +770,7 @@ function MAD_bot() {
 				for(let i=0;i<35;i++) r.childNodes[3].childNodes[1].firstChild.click();
 			}
 			// if we lose money, remove some trade routes
-			if(get_production('Money')<0) r.childNodes[3].childNodes[1].firstChild.click();
+			if(get_production('Money').substring(0,1)=='-') r.childNodes[1].childNodes[1].firstChild.click();
 		} else if(evolve.global.tech.hasOwnProperty('mad')) {
 			// cancel oil trade routes when we have mad
 			if(num_traderoutes('Oil')>0) r.childNodes[4].click();
@@ -678,16 +787,28 @@ function MAD_bot() {
 				for(let i=0;i<35;i++) r.childNodes[3].childNodes[1].firstChild.click();
 			}
 			// if we lose money, remove some trade routes
-			if(get_production('Money')<0) r.childNodes[1].childNodes[1].firstChild.click();
+			if(get_production('Money').substring(0,1)=='-') r.childNodes[1].childNodes[1].firstChild.click();
 		} else {
-			// we have hunter process, cancel titanium trade routes
 			if(num_traderoutes('Uranium')>0) r.childNodes[4].click();
 		}
+	}
+	// build meditation chambers only if zen power is full
+	if(evolve.global.resource.hasOwnProperty('Zen') && evolve.global.resource.Zen.amount==evolve.global.resource.Zen.max) {
+		if(build_city(['meditation'])) return;
 	}
 	// build buildings we can't have enough of, like population and production
 	// boosts that don't require population (so temples are ok, filling them is
 	// somewhat low priority)
-	if(build_city(['basic_housing','cottage','lodge','farm','temple','garrison','lumber_yard','smelter','metal_refinery','amphitheatre','trade','oil_well','bank','captive_housing','graveyard','soul_well'])) return;
+	// except synth doesn't want this at power deficit
+	{
+		let build=true;
+		if(evolve.global.race.hasOwnProperty('powered')) {
+			let p=get_power();
+			if(p!=null && p<0) build=false;
+		} 
+		if(build && build_city(['basic_housing','cottage','lodge'])) return;
+		if(build_city(['farm','temple','garrison','lumber_yard','smelter','metal_refinery','amphitheatre','trade','oil_well','bank','captive_housing','graveyard','soul_well','smokehouse','nanite_factory'])) return;
+	}
 	// can still build miners if we are waiting for power buildings
 	if(build_city(['mine'])) return;
 	// build tech buildings until we have enough knowledge for rocketry and MAD
@@ -709,14 +830,14 @@ function MAD_bot() {
 	// if we have power deficit, build power buildings (not fission reactors)
 	{
 		if(evolve.global.tech.hasOwnProperty('high_tech') && evolve.global.tech.high_tech>=2) {
-			let q=document.getElementById('powerMeter');
+			let p=get_power();
 			let r=document.getElementById('city-mill');
 			if(r!=null && r.childNodes.length>=4) {
 				let num=r.childNodes[3].innerHTML;
 				while(num--) r.childNodes[2].click();
 			}
-			if(q.innerHTML<0) {
-				if(build_city(['coal_power','oil_power'])) return;
+			if(p!=null && p<0) {
+				if(build_city(['coal_power','oil_power','windmill'])) return;
 				// build windmills after they give power, and turn all on
 				if(evolve.global.tech.agriculture>=6) {
 					if(r!=null && r.className=='action vb') r.click();
@@ -803,11 +924,6 @@ function MAD_bot() {
 	//      handle high population (insect races)
 
 	// TODO make the entire thing smarter, care about objectives
-	// - if we have mimic (or get it later in the run):
-	//   - heat is default genus
-	//   - if we have kindling kindred or are already heat: avian
-	//   - if we already are avian and (heat or kindling kindred): sand?
-	//   - if we already are avian and sand? and kindling kindred: small?
 	// - when electricity is unlocked, prioritize power generation hard
 	// - when industrialization is researched, buy titanium
 	// - turn on windmills
