@@ -4,11 +4,13 @@
 // emulate my playstyle. we have to do the protoplasm stage manually and
 // pick a race, then the rest of the run is automated except for the reset.
 // there are no options to set. the script is supposed to play somewhat
-// efficiently and avoid doing stupid stuff. script doesn't do stuff that's
-// not needed for a mad reset (doesn't touch arpa projects, a lot of techs are
-// not researched). trade routes are used, but only for titanium until we have
-// hunter process, and alloy/oil/uranium to speed up uranium storage, rocketry
-// and mutual destruction.
+// efficiently and avoid doing stupid stuff.
+
+// beware of playing manually when the script is active. holding multiplier keys
+// will make the script accidentally apply multipliers to actions it does. it's
+// safest to disable multiplier keys in options
+
+// can currently do: MAD, bioseed, vacuum collapses, lone survivor
 
 //-----------------------------------------
 // various general-purpose helper functions
@@ -95,6 +97,7 @@ var settings={
 	spy_purchase_power_thresholds:[2500000,2000000,4500000],
 	depopulate_farmer_threshold:5000, // depopulate farmers with food above this value. should be low because of ravenous
 	replicator_power_buffer:5,
+	peacekeeper_buffer:3,
 };
 
 //----------------------------------------------------
@@ -279,6 +282,23 @@ function research_tech(avoidlist) {
 	return false;
 }
 
+// research only techs from given list
+function research_given_techs(list) {
+	let q=document.getElementById('tech');
+	if(q==null) return false;
+	for(let i=0;i<q.childNodes.length;i++) if(q.childNodes[i].id.substring(0,5)=='tech-') {
+		let techname=q.childNodes[i].id.slice(5);
+		if(!list.has(techname)) continue;
+		// check if tech is affordable
+		if(!can_afford_thing('tech',techname)) continue;
+		// can't buy precognition tech
+		if(q.childNodes[i].firstChild.className.includes('precog')) continue;
+		q.childNodes[i].__vue__.action();
+		return true;
+	}
+	return false;
+}
+
 // appoint a governor. requires that none is currently set
 function set_governor(governor) {
 	if(!has_tech('governor',1)) return false;
@@ -328,10 +348,12 @@ function set_nanite_input(resource,amount) {
 
 // return factory capacity
 // TODO add other factories
+// TODO high-tech factories: account for ls/retirement increase
 function get_num_factory_production_lines() {
 	let num=0;
 	if(building_exists('city','factory')) num+=evolve.global.city.factory.count;
 	if(building_exists('space','red_factory')) num+=evolve.global.space.red_factory.count;
+	if(building_exists('tauceti','tau_factory')) num+=evolve.global.tauceti.tau_factory.count*5;
 	return num;
 }
 
@@ -477,12 +499,15 @@ const sublocation=new Map([
 	['interstellar-processing','int_alpha'],
 	['interstellar-fusion','int_alpha'],
 	['interstellar-laboratory','int_alpha'],
+	['interstellar-exchange','int_alpha'],
 	['interstellar-g_factory','int_alpha'],
 	['interstellar-warehouse','int_alpha'],
 // interstellar - proxima centauri
 	['interstellar-proxima_mission','int_proxima'],
 	['interstellar-xfer_station','int_proxima'],
+	['interstellar-cargo_yard','int_proxima'],
 	['interstellar-cruiser','int_proxima'],
+	['interstellar-dyson','int_proxima'],
 // interstellar - helix nebula
 	['interstellar-nebula_mission','int_nebula'],
 	['interstellar-harvester','int_nebula'],
@@ -500,12 +525,81 @@ const sublocation=new Map([
 	['interstellar-mass_ejector','int_blackhole'],
 	['interstellar-jump_ship','int_blackhole'],
 	['interstellar-wormhole_mission','int_blackhole'],
-	['interstellar-stargate','int_blackhole'],
+//	['interstellar-stargate','int_blackhole'],
+	['interstellar-s_gate','int_blackhole'],
 // portal - fortress
 	['portal-turret','prtl_fortress'],
 	['portal-carport','prtl_fortress'],
-	['portal-repair_droid','prtl_fortress'],
 	['portal-war_droid','prtl_fortress'],
+	['portal-repair_droid','prtl_fortress'],
+// portal - badlands
+	['portal-war_drone','prtl_badlands'],
+	['portal-sensor_drone','prtl_badlands'],
+	['portal-attractor','prtl_badlands'],
+
+// tauceti - tau_star
+	['tauceti-ringworld','tau_star'],
+	['tauceti-matrix','tau_star'],
+	['tauceti-goe_facility','tau_star'],
+// tauceti - tau_home
+	['tauceti-orbital_station','tau_home'],
+	['tauceti-colony','tau_home'],
+	['tauceti-tau_farm','tau_home'],
+	['tauceti-mining_pit','tau_home'],
+	['tauceti-alien_outpost','tau_home'],
+	['tauceti-fusion_generator','tau_home'],
+	['tauceti-repository','tau_home'],
+	['tauceti-tau_factory','tau_home'],
+	['tauceti-infectious_disease_lab','tau_home'],
+	['tauceti-tauceti_casino','tau_home'],
+	['tauceti-tau_cultural_center','tau_home'],
+// tauceti - tau_red
+	['tauceti-red_mission','tau_red'],
+	['tauceti-orbital_platform','tau_red'],
+	['tauceti-subjugate','tau_red'],
+	['tauceti-introduce','tau_red'],
+	['tauceti-contact','tau_red'],
+	['tauceti-overseer','tau_red'],
+	['tauceti-womling_village','tau_red'],
+	['tauceti-womling_farm','tau_red'],
+	['tauceti-womling_mine','tau_red'],
+	['tauceti-womling_fun','tau_red'],
+	['tauceti-womling_lab','tau_red'],
+// tauceti - tau_gas
+	['tauceti-gas_contest','tau_gas'],
+	['tauceti-gas_contest-a1','tau_gas'],
+	['tauceti-gas_contest-a2','tau_gas'],
+	['tauceti-gas_contest-a3','tau_gas'],
+	['tauceti-gas_contest-a4','tau_gas'],
+	['tauceti-gas_contest-a5','tau_gas'],
+	['tauceti-gas_contest-a6','tau_gas'],
+	['tauceti-gas_contest-a7','tau_gas'],
+	['tauceti-gas_contest-a8','tau_gas'],
+	['tauceti-ore_refinery','tau_gas'],
+	['tauceti-refueling_station','tau_gas'],
+	['tauceti-whaling_station','tau_gas'],
+	['tauceti-womling_station','tau_gas'],
+// tauceti - tau_roid
+	['tauceti-roid_mission','tau_roid'],
+	['tauceti-mining_ship','tau_roid'],
+	['tauceti-patrol_ship','tau_roid'],
+	['tauceti-shaling_ship','tau_roid'],
+// tauceti - tau_gas2
+	['tauceti-gas_contest2','tau_gas2'],
+	['tauceti-gas_contest-b1','tau_gas2'],
+	['tauceti-gas_contest-b2','tau_gas2'],
+	['tauceti-gas_contest-b3','tau_gas2'],
+	['tauceti-gas_contest-b4','tau_gas2'],
+	['tauceti-gas_contest-b5','tau_gas2'],
+	['tauceti-gas_contest-b6','tau_gas2'],
+	['tauceti-gas_contest-b7','tau_gas2'],
+	['tauceti-gas_contest-b8','tau_gas2'],
+	['tauceti-alien_station_survey','tau_gas2'],
+	['tauceti-alien_space_station','tau_gas2'],
+	['tauceti-alien_station','tau_gas2'],
+	['tauceti-ignite_gas_giant','tau_gas2'],
+	['tauceti-ignition_device','tau_gas2'],
+	['tauceti-matrioshka_brain','tau_gas2'],
 ]);
 
 // build a building. return true if we succeeded
@@ -513,7 +607,9 @@ const sublocation=new Map([
 function build_structure(list) {
 	// special cases: stuff not in evolve.global.location.building
 	// missions are typically here
-	let special_cases=['city-slave_market','city-assembly','space-test_launch','space-moon_mission','space-red_mission','space-hell_mission','space-sun_mission','space-gas_mission','space-gas_moon_mission','space-belt_mission','space-dwarf_mission','city-horseshoe','interstellar-alpha_mission','interstellar-proxima_mission','interstellar-nebula_mission','interstellar-neutron_mission','interstellar-blackhole_mission'];
+	let special_cases=['city-slave_market','city-assembly','space-test_launch','space-moon_mission','space-red_mission','space-hell_mission','space-sun_mission','space-gas_mission','space-gas_moon_mission','space-belt_mission','space-dwarf_mission','city-horseshoe','interstellar-alpha_mission','interstellar-proxima_mission','interstellar-nebula_mission','interstellar-neutron_mission','interstellar-blackhole_mission','tauceti-contact','tauceti-introduce','tauceti-subjugate','tauceti-gas_contest','tauceti-roid_mission','tauceti-gas_contest2','tauceti-alien_station_survey',
+		'tauceti-gas_contest-a1','tauceti-gas_contest-a2','tauceti-gas_contest-a3','tauceti-gas_contest-a4','tauceti-gas_contest-a5','tauceti-gas_contest-a6','tauceti-gas_contest-a7','tauceti-gas_contest-a8',
+		'tauceti-gas_contest-b1','tauceti-gas_contest-b2','tauceti-gas_contest-b3','tauceti-gas_contest-b4','tauceti-gas_contest-b5','tauceti-gas_contest-b6','tauceti-gas_contest-b7','tauceti-gas_contest-b8'];
 	if(!Array.isArray(list)) { console.log('build_structure: expected list, got',list); return false; } // must be an array of buildings
 	for(let id of list) {
 		let minus=id.indexOf('-');
@@ -529,10 +625,56 @@ function build_structure(list) {
 				// q can actually be 0 here. somehow city-rock_quarry with synth
 				// imitating ent gets past the previous test
 				if(!q) continue;
+				// TODO action actually takes a parameter. didn't increase clicks
 				q.__vue__.action();
 				return true;
 			}
 		}
+	}
+	return false;
+}
+
+// return list of length 2n [res1,cost1,res2,cost2,...]
+// grabbed from the html which kind of sucks
+function get_building_cost(id) {
+	let q=document.getElementById(id);
+	if(!q) return false;
+	let r=q.firstChild;
+	let s=r.getAttributeNames();
+	let cost=[];
+	for(str of s) if(str.substring(0,5)=='data-') {
+		cost.push(str_capitalize(str.slice(5)));
+		cost.push(parseInt(r.getAttribute(str)));
+	}
+	return cost;
+}
+
+// build a megaproject, and as many chunks as we can afford
+// return true if succeeded
+function build_big_structure(id,max=-1) {
+	if(max==-1) console.log('error build_big_structure',id+', max not given')
+	let minus=id.indexOf('-');
+	if(minus==-1) console.log('build big structure: error, no minus in',id);
+	let where=id.substring(0,minus);
+	let what=id.slice(minus+1);
+	if(!tab_exists(where)) return false;
+	if(evolve.global[where][what]!=null) {
+		let cost=get_building_cost(id);
+		if(cost==false) return false;
+		// find amount we can buy
+		let low=max-evolve.global[where][what].count;
+		for(let i=0;i<cost.length;i+=2) {
+			let res=cost[i],val=cost[i+1];
+			if(resource_exists(res)) {
+				let how=Math.trunc(get_resource(res).amount/val);
+				if(low>how) low=how;
+			} else return false;
+		}
+		if(low==0) return false;
+		let q=document.getElementById(id);
+		if(q==null) return false;
+		if(low>50) low=50;
+		for(let i=0;i<low;i++) q.__vue__.action();
 	}
 	return false;
 }
@@ -569,7 +711,7 @@ function get_enabled_disabled(id) {
 	let str=q.__vue__.on_label();
 	let pos=str.indexOf(': ');
 	on=parseInt(str.slice(pos+2));
-	str=q.__vue__.on_label();
+	str=q.__vue__.off_label();
 	pos=str.indexOf(': ');
 	off=parseInt(str.slice(pos+2));
 	return [on,off];
@@ -588,6 +730,10 @@ function enable_building(id) {
 }
 
 // return false if it failed
+// use vue functions instead of this mess
+// id=govOffice
+// .setTask(o,c), o is slot number?
+// .activeTask(
 function set_governor_task(task) {
 	if(!has_tech('governor',1)) return false;
 	let actualname='';
@@ -746,12 +892,50 @@ function decrease_ritual(resource) {
 	if(q!=null) q.__vue__.subSpell(resource);
 }
 
+// get mana spent on current rituals
+// we have to read it from the game and parse the text
+function get_ritual_cost() {
+	let q=document.getElementById('iPylon');
+	if(q==null) return NaN;
+	let str=q.childNodes[1].childNodes[2].innerHTML;
+	let pos=str.indexOf(' Mana');
+	return str_to_float(str.substring(0,pos));
+}
+
+// get mana production with rituals taken out
+function get_ritual_mana_production() {
+	return get_production('Mana')-get_ritual_cost();
+}
+
+// quick fix for misaligned rituals, all rituals should be 0 or have the same value
+function fix_misaligned_rituals() {
+	if(!evolve.global.race.hasOwnProperty('casting')) return false;
+	let c=evolve.global.race.casting;
+	// misaligned iff there are at least 3 unique values including 0
+	// put 0 in the array to cover the case where all rituals are used
+	let a=[c.army,c.crafting,c.factory,c.farmer,c.hunting,c.lumberjack,c.miner,c.science,0];
+	let b=[... new Set(a)];
+	if(b.length>2) {
+		// rituals are misaligned, fix
+		let q=document.getElementById('iPylon');
+		if(q==null) console.log('rituals exist, but don\'t');
+		let min=999999999;
+		for(let v of b) if(v>0 && min>v) min=v;
+		for(let b in c) {
+			let val=c[b];
+			while(val>min) decrease_ritual(b),val--;
+		}
+		return true;
+	}
+	return false;
+}
+
 //------------------------------
 // shared code for all run types
 //------------------------------
 
 // don't research reset-related techs
-const tech_avoid_safeguard=new Set(['demonic_infusion','purify_essence','procotol66','incorporeal','dial_it_to_11','limit_collider']);
+const tech_avoid_safeguard=new Set(['demonic_infusion','dark_bomb','purify_essence','procotol66','incorporeal','dial_it_to_11','limit_collider']);
 
 // "manually" gather resources
 // TODO should i change to vue-actions here? i guess it's fine until proven not fine
@@ -818,10 +1002,10 @@ function set_mimic(genuslist) {
 function assign_jobs_equally(joblist,max) {
 	if(joblist==0) return; // not found in DOM, abort
 	let n=joblist.childNodes.length; // number of entries in job list
-	if(n==0) return;       // no child nodes, abort
+	if(n==0) return;                 // no child nodes, abort
 	let active=0;                    // number of active jobs
-	let amount=[];                  // currently assigned workers to job i
-	let visible=[];                 // true=visible
+	let amount=[];                   // currently assigned workers to job i
+	let visible=[];                  // true=visible
 	for(let i=1;i<n;i++) { // start at 1, first entry is header
 		let q=joblist.childNodes[i];
 		if(q.hasAttribute('style') && q.getAttribute('style')!='') continue;
@@ -845,10 +1029,65 @@ function assign_jobs_equally(joblist,max) {
 			amount[i]++;
 		}
 	}
+	// spread remainder
 	for(let i=1;i<n;i++) if(visible[i]) {
-		let desired=Math.trunc(max/active);
 		let q=joblist.childNodes[i];
 		q.childNodes[1].childNodes[1].click();
+	}
+}
+
+// assign jobs according to percentages in list, max is amount of workers
+// caller must ensure that all jobs in the list exist
+// meh, lots of repeated code
+// should probably rewrite with vue
+function assign_jobs_percent(dom,list,max) {
+	if(dom==null) return;
+	if(!Array.isArray(list)) { console.log('assign_jobs expected list, got element',list); return; }
+	let n=dom.childNodes.length;
+	if(n==0) { console.log('error, joblist not found'); return; }
+	let sum=0;
+	for(let i=1;i<list.length;i+=2) {
+		list[i]=Math.trunc(list[i]/100.0*max);
+		sum+=list[i];
+	}
+	// just spread the remainder from the top
+	if(sum<max) for(let i=1;i<list.length;i+=2) if(sum<max) list[i]++,sum++;
+	// check that the jobs exist
+	let found=0;
+	let amount=[];                   // currently assigned workers to job i
+	let desired=[];                  // desired amount
+	let visible=[];                  // true=visible
+	for(let i=1;i<n;i++) {
+		let q=dom.childNodes[i];
+		if(q.hasAttribute('style') && q.getAttribute('style')!='') continue;
+		let str=q.id;
+		if(str=='') str=q.firstChild.id;
+		visible[i]=true;
+		amount[i]=q.firstChild.childNodes[1].innerHTML;
+		desired[i]=0;
+		for(let j=0;j<list.length;j+=2) if(str==list[j]) {
+			desired[i]=list[j+1];
+			found++;
+			break;
+		}
+	}
+	if(found*2<list.length) { console.log('assign_job_percent: error, not all jobs found',list); return; }
+	// convert percentages in list to actual amounts
+	// decrease
+	for(let i=1;i<n;i++) if(visible[i]) {
+		let q=dom.childNodes[i];
+		while(amount[i]>desired[i]) {
+			q.childNodes[1].childNodes[0].click();
+			amount[i]--;
+		}
+	}
+	// increase
+	for(let i=1;i<n;i++) if(visible[i]) {
+		let q=dom.childNodes[i];
+		while(desired[i]>amount[i]) {
+			q.childNodes[1].childNodes[1].click();
+			amount[i]++;
+		}
 	}
 }
 
@@ -941,6 +1180,13 @@ function apply_population_changes(craft,jobs) {
 	}
 }
 
+// for debugging
+function get_total_desired(jobs) {
+	let desired=0;
+	for(let job in jobs) desired+=jobs[job].desired;
+	return desired;
+}
+
 // only assigns to crafters as a category, not to individual materials
 // craft: crafter settings, it's just passed on to apply_population_changes
 // miners=false: don't use miners (used when copper and iron production in space is good)
@@ -949,6 +1195,7 @@ function apply_population_changes(craft,jobs) {
 // priority), space miners, archaeologists, ship crew (depopulate other stuff if
 // they aren't maxed out), surveyors, ghost trappers, elysium miners,
 // pit miners. also meditators, teamsters i guess
+// TODO consider rewriting this function, it has become a debugging nightmare
 function assign_population(craft,miners=true,coalminers=true,surveyors='none') {
 	// must have unlocked civics tab, must have >0 max population?
 	if(evolve.global.resource[evolve.global.race.species].max==0) return;
@@ -963,15 +1210,15 @@ function assign_population(craft,miners=true,coalminers=true,surveyors='none') {
 	let spent=0; // number of workers assigned
 	let population=evolve.global.resource[evolve.global.race.species].amount;
 	if('farmer' in jobs) {
-		jobs['farmer'].desired=jobs['farmer'].current;
+		jobs.farmer.desired=jobs.farmer.current;
 		if(get_ravenous_food_production()<0) {
 			// food deficit: add 1 more farmer
-			jobs['farmer'].desired++;
+			jobs.farmer.desired++;
 		} else if(evolve.global.resource.Food.amount>settings.depopulate_farmer_threshold) {
-			jobs['farmer'].desired--;
-			if(jobs['farmer'].desired<0) jobs['farmer'].desired=0;
+			jobs.farmer.desired--;
+			if(jobs.farmer.desired<0) jobs['farmer'].desired=0;
 		}
-		spent=jobs['farmer'].desired;
+		spent=jobs.farmer.desired;
 	}
 	if('crew' in jobs) spent+=jobs.crew.current;
 	// have at least 1 crafter per crafted material
@@ -986,8 +1233,8 @@ function assign_population(craft,miners=true,coalminers=true,surveyors='none') {
 	for(let job in jobs) {
 		if('farmer' in jobs) {
 			// even if we starve, we really want to produce a little bit of each thing
-			while(spent>=population && jobs['farmer'].desired>1) {
-				jobs['farmer'].desired--; spent--;
+			while(spent>=population && jobs.farmer.desired>1) {
+				jobs.farmer.desired--; spent--;
 			}
 		}
 		if(job=='unemployed' || job=='farmer' || job=='scavenger' || job=='priest' || job=='craftsman' || job=='hell_surveyor') continue;
@@ -1006,20 +1253,22 @@ function assign_population(craft,miners=true,coalminers=true,surveyors='none') {
 			if(building_exists('space','iridium_ship')) jobs[job].max+=get_building('space','iridium_ship').count;
 			if(building_exists('space','iron_ship')) jobs[job].max+=get_building('space','iron_ship').count;
 		}
-		let missing=jobs[job].max-jobs[job].desired
+		let missing=jobs[job].max-jobs[job].desired;
 		if(population-spent>=missing) jobs[job].desired+=missing,spent+=missing;
 		else jobs[job].desired+=population-spent,spent=population;
 	}
 	// assign desired amount of surveyors ('none','one','all')
 	// TODO convert "one" to suitable number for high population (insect)
-	// for highpop=5 i think it's 8
-	for(let job in jobs) if(jobs[job]=='hell_surveyor') {
+	// for highpop=5 i think 8 is safe
+	if(jobs.hasOwnProperty('hell_surveyor')) {
+		let job='hell_surveyor';
 		let num_survey=0;
 		if(surveyors=='one') num_survey=1;
 		else if(surveyors=='all') num_survey=jobs[job].max;
-		if(num_survey==0) continue;
-		if(population-spent>=num_survey) jobs[job].desired=num_survey;
-		else jobs[job].desired=population-spent,spent=population;
+		if(num_survey>0) {
+			if(population-spent>=num_survey) jobs[job].desired=num_survey,spent+=num_survey;
+			else jobs[job].desired=population-spent,spent=population;
+		}
 	}
 	// for some magic fraction of total workers, divide them equally among
 	// basic jobs that aren't farmers and scavengers
@@ -1035,12 +1284,12 @@ function assign_population(craft,miners=true,coalminers=true,surveyors='none') {
 		jobs[job].desired+=Math.trunc(tospend/num);
 		spent+=Math.trunc(tospend/num);
 	}
-	// divide the rest of the workers among non-basic jobs, except priests and
-	// tormentors
+	// divide the rest of the workers among non-basic jobs, except priests,
+	// tormentors, surveyors, space miners
 	num=0;     // number of eligible jobs
 	let cap=0; // max number of slots to fill
 	for(let job in jobs) {
-		if(jobs[job].jobtype!='nonbasic' || job=='priest' || job=='torturer') continue;
+		if(jobs[job].jobtype!='nonbasic' || job=='priest' || job=='torturer' || job=='hell_surveyor' || job=='space_miner') continue;
 		if((job=='miner' && !miners) || (job=='coal_miner' && !coalminers)) continue;
 		if(jobs[job].max==-1) console.log('sanity error, uncapped specialist job');
 		num++;
@@ -1051,7 +1300,7 @@ function assign_population(craft,miners=true,coalminers=true,surveyors='none') {
 		if(fraction>1) fraction=1;
 		// assign
 		for(let job in jobs) {
-			if(jobs[job].jobtype!='nonbasic' || job=='priest' || job=='torturer') continue;
+			if(jobs[job].jobtype!='nonbasic' || job=='priest' || job=='torturer' || job=='hell_surveyor' || job=='space_miner') continue;
 			if((job=='miner' && !miners) || (job=='coal_miner' && !coalminers)) continue;
 			spent+=Math.trunc(fraction*(jobs[job].max-jobs[job].desired));
 			jobs[job].desired+=Math.trunc(fraction*(jobs[job].max-jobs[job].desired));
@@ -1069,8 +1318,7 @@ function assign_population(craft,miners=true,coalminers=true,surveyors='none') {
 	}
 	// if scavengers exist, dump the rest there
 	if('scavenger' in jobs) {
-		job='scavenger';
-		jobs[job].desired+=population-spent;
+		jobs.scavenger.desired+=population-spent;
 		spent=population;
 	} else {
 		// TODO otherwise, distribute evenly among non-farmer basic jobs
@@ -1174,7 +1422,7 @@ function set_trade_routes(list) {
 	}
 	for(let i=0;i<list.length;i+=2) {
 		let j=res.indexOf(list[i]);	
-		if(j<0) { console.log('invalid trade id',list,list[i]); dfgdfs.length; return; }
+		if(j<0) { console.log('invalid trade id',list,list[i]); return; }
 		desired[j]=list[i+1];
 	}
 	// first pass: decrease
@@ -1325,6 +1573,11 @@ function build_storage_if_capped(list) {
 			}
 			if(bn=='Money') {
 				if(build_structure(['city-bank'])) return true;
+				if(building_exists('interstellar','starport')) {
+					if(evolve.global.interstellar.starport.support<evolve.global.interstellar.starport.s_max) {
+						if(build_structure(['interstellar-exchange'])) return true;
+					}
+				}
 				let low=can_afford_arpa('stock_exchange');
 				if(low==100) return build_arpa_project('stock_exchange');
 			} else if(['Steel','Titanium','Alloy'].includes(bn)) {
@@ -1413,17 +1666,17 @@ function arpacostconvert(str) {
 	return str;
 }
 
-// return how many segments we can afford of given arpa project
-function can_afford_arpa(id,ignore=null) {
-	let q=document.getElementById('arpa'+id);
-	if(q==null) return null;
+// return the cost of 1% the next arpa project of the given id
+// return as a nested array [[res1,res2,...],[cost1,cost2,...]]
+function arpa_project_costs(id) {
 	// can we afford? we need to check manually.
 	// can't use evolve.actions.arpa.id.cost.resource() because that's the raw cost
 	// i ended up doing the pain of parsing the html, and this approach is
 	// extremely sensitive to breaking by the smallest formatting change
+	let q=document.getElementById('arpa'+id);
+	if(q==null) return null;
 	let str=q.childNodes[1].childNodes[1].getAttribute('aria-label');
-	// we can't afford
-	if(str.indexOf('Insufficient')>=0) return 0;
+	if(str.indexOf('Insufficient')>=0) return null; // we can't afford 1%, return empty list
 	let rawcosts=str.split(' ');
 	let cost_res=[];
 	let cost_amount=[];
@@ -1458,6 +1711,18 @@ function can_afford_arpa(id,ignore=null) {
 		}
 		// TODO check all possible costs and add more oddities
 	}
+	return [cost_res,cost_amount];
+}
+
+// return how many segments we can afford of given arpa project
+// ignore: resource to ignore in the cost (used for knowledge for supercolliders)
+function can_afford_arpa(id,ignore=null) {
+	let z=arpa_project_costs(id);
+	// invalid arpa id, arpa tab not unlocked, can't afford 1%
+	if(z==null) return 0;
+	let cost_res=z[0];
+	let cost_amount=z[1];
+	let numcost=cost_res.length;
 	// check how many segments we can afford
 	let low=100;
 	for(let i=0;i<numcost;i++) {
@@ -1473,22 +1738,25 @@ function can_afford_arpa(id,ignore=null) {
 // build the biggest chunk we can afford
 // the vue action supports all steps from 1-100, not only those listed!
 // arpa projects: lhc (supercollider), launch_facility, monument, railway,
-// stock_exchange, nexus
-// TODO find id for vacuum thingy
+// stock_exchange, roid_eject, nexus, syphon
 function build_arpa_project(id) {
 	let low=can_afford_arpa(id);
 	if(low==null || low==0) return false;
 	let max=100-evolve.global.arpa[id].complete;
+	// don't build the last segment of mana syphon #80
+	if(id=='syphon' && evolve.global.arpa[id].rank==79) max--;
 	if(low>max) low=max;
+	if(low==0) return false;
 	let q=document.getElementById('arpa'+id);
 	q.__vue__.build(id,low);
 	return true;
 }
 
 // if we have a half-finished arpa project, prioritize it until it's finished
+// (except for mana syphons)
 function finish_unfinished_arpa_project(){
 	if(!tab_exists('arpa')) return false;
-	let arpa=['lhc','launch_facility','monument','railway','stock_exchange','nexus'];
+	let arpa=['lhc','launch_facility','monument','railway','stock_exchange','nexus','roid_eject'];
 	for(let x of arpa) if(evolve.global.arpa.hasOwnProperty(x)) {
 		if(evolve.global.arpa[x].complete>0 && evolve.global.arpa[x].complete<100) {
 			build_arpa_project(x);
@@ -1498,18 +1766,50 @@ function finish_unfinished_arpa_project(){
 	return false;
 }
 
+// return [resource,cost]
+function get_cost_of_next_monument() {
+	let list=arpa_project_costs('monument');
+	if(list==null) return ['',NaN];
+	if(list[0].length!=1) console.log('error, monument doesn\'t have 1 cost');
+	return [list[0][0],list[1][0]*100];
+}
+
 // rituals: army not used unless terrifying trait (balorg)
-function pylon_management() {
+// or we have hell presense
+// percent: percentage of mana production to spent on rituals
+function pylon_management(percent) {
+	let rit=['farmer','crafting','factory','farmer','hunting','lumberjack','miner','science'];
 	if(evolve.global.race.universe!='magic') return;
 	let list=['science','miner','crafting','hunting'];
 	if(resource_exists('Cement')) list.push('cement');
 	if(resource_exists('Lumber')) list.push('lumberjack');
-	if(has_trait('terrifying')) list.push('army');
-	if(get_production('Mana')>4) {
+	if(has_trait('terrifying') || evolve.global.portal?.fortress?.patrols>0) list.push('army');
+	let c=evolve.global.race.casting;
+	if(fix_misaligned_rituals()) return;
+	// remove rituals not in list
+	for(b of rit) if(!list.includes(b)) {
+		let v=c[b];
+		while(v>0) decrease_ritual(b),v--;
+	}
+	// spent given percent on rituals
+	let totalmana=get_ritual_mana_production();
+	let currentcost=-get_ritual_cost();
+	if(totalmana*percent/100.0>currentcost) {
+		// add
 		for(let res of list) increase_ritual(res);
-	} else if(get_production('Mana')<1) {
+	} else {
+		// remove
 		for(let res of list) decrease_ritual(res);
 	}
+}
+
+function get_hell_mercenary_cost(id) {
+	let q=document.getElementById('fort');
+	if(q==null) return NaN;
+	let str=q.__vue__.hireLabel(id);
+	let pos=str.indexOf('$');
+	if(pos<0) return NaN;
+	return str_to_float(str.slice(pos+1));
 }
 
 function get_spy_cost(id) {
@@ -1627,9 +1927,9 @@ function matter_replicator_management(resource=null) {
 	if(resource!=null && q.__vue__.res!=resource && q.__vue__.avail(resource)) q.__vue__.setVal(resource);
 	let current=evolve.global.city.power;
 	if(current<settings.replicator_power_buffer-1) {
-		while(current<settings.replicator_power_buffer-1) q.__vue__.less(),current++;
+		while(current<settings.replicator_power_buffer-1) q.__vue__.less(),current+=2;
 	} else if(current>settings.replicator_power_buffer+1) {
-		while(current>settings.replicator_power_buffer+1) q.__vue__.more(),current--;
+		while(current>settings.replicator_power_buffer+1) q.__vue__.more(),current-=2;
 	}
 }
 
@@ -1648,6 +1948,81 @@ function build_shrine() {
 	if(get_building('city','shrine').know<25 && bonus=='knowledge') return build_structure(['city-shrine']);
 	else if(get_building('city','shrine').know>=25 && bonus=='metal') return build_structure(['city-shrine']);
 	return false;
+}
+
+function set_tax_percent(val) {
+	if(!evolve.global.civic.taxes.display) return;
+	let q=document.getElementById('tax_rates');
+	if(q==null) { console.log('taxes not found, shouldn\'t happen'); }
+	let current=evolve.global.civic.taxes.tax_rate;
+	while(current<val) q.__vue__.add(),current++;
+	while(current>val) q.__vue__.sub(),current--;
+}
+
+function can_minor_wish() { return has_tech('wish',1) && evolve.global.race.wishStats?.minor==0; }
+function can_major_wish() { return has_tech('wish',2) && evolve.global.race.wishStats?.major==0; }
+function get_wish_struct() { return evolve.global.race.wishStats; }
+
+// excite, famous, influence, know, love, money, res, strength
+function make_minor_wish(x) {
+	let q=document.getElementById('minorWish');
+	if(q==null) return false;
+	// apparently there's a window[string] thingy to make a pointer,
+	// but i couldn't get it to work. resorting to ugly if-list instead
+	// (i'm not going the eval() route)
+	q=q.__vue__;
+	if(x=='excite') q.excite();
+	else if(x=='famous') q.famous();
+	else if(x=='influence') q.influence();
+	else if(x=='know') q.know();
+	else if(x=='love') q.love();
+	else if(x=='money') q.money();
+	else if(x=='res') q.res();
+	else if(x=='strength') q.strength();
+	else { console.log('illegal minor wish',x); return; }
+}
+
+// adoration, greatness, money, peace, plasmid, power, res, thrill
+function make_major_wish(x) {
+	let q=document.getElementById('majorWish');
+	if(q==null) return false;	
+	q=q.__vue__;
+	if(x=='adoration') q.adoration();
+	else if(x=='greatness') q.greatness();
+	else if(x=='money') q.money();
+	else if(x=='peace') q.peace();
+	else if(x=='plasmid') q.plasmid();
+	else if(x=='power') q.power();
+	else if(x=='res') q.res();
+	else if(x=='thrill') q.thrill();
+	else { console.log('illegal major wish',x); return; }
+}
+
+// no vue interface it seems
+function set_ocular_power(list) {
+	if(!has_trait('ocular_power')) return;
+	let slots=2;
+	if(evolve.global.race.ocular_power<1) slots=1;
+	else if(evolve.global.race.ocular_power>=3) slots=3;
+	let q=document.getElementById('ocularPower');
+	if(q==null) console.log('ocular sanity error');
+	let powers=['d','p','w','t','f','c'];
+	let desired=[0,0,0,0,0,0];
+	// if list is too long, toss elements we don't have slots for
+	for(let i=0;i<list.length && i<slots;i++) {
+		let pos=powers.indexOf(list[i]);
+		if(pos<0) console.log('ocular list error',list);
+		desired[pos]=1;
+	}
+	let r=q.childNodes[1];
+	// uncheck
+	for(let i=0;i<6;i++) if(evolve.global.race.ocularPowerConfig[powers[i]] && desired[i]==0) {
+		r.childNodes[i].firstChild.click();
+	}
+	// check
+	for(let i=0;i<6;i++) if(!evolve.global.race.ocularPowerConfig[powers[i]] && desired[i]==1) {
+		r.childNodes[i].firstChild.click();
+	}
 }
 
 //-----------------------
@@ -1826,19 +2201,6 @@ function MAD_spammable_buildings_that_use_power() {
 	return false;
 }
 
-function pylon_management() {
-	if(evolve.global.race.universe!='magic') return;
-	let list=['science','miner','crafting','hunting'];
-	if(resource_exists('Cement')) list.push('cement');
-	if(resource_exists('Lumber')) list.push('lumberjack');
-	if(has_trait('terrifying')) list.push('war');
-	if(get_production('Mana')>4) {
-		for(let res of list) increase_ritual(res);
-	} else if(get_production('Mana')<1) {
-		for(let res of list) decrease_ritual(res);
-	}
-}
-
 function MAD_trade() {
 	if(has_trait('terrifying')) return; // no trading for balorg
 	if(resource_exists('Titanium') && !has_tech('titanium',1)) {
@@ -1998,6 +2360,7 @@ function MAD_main(governor) {
 	if(MAD_research_tech()) return;
 	MAD_set_smelter_output();
 	MAD_set_nanite_input();
+	set_ocular_power(['t','c']);
 	tax_morale_balance(20,55);
 	matter_replicator_management('Brick');
 	if(set_governor(governor)) return;
@@ -2053,7 +2416,7 @@ function MAD_main(governor) {
 	// spam buildings that require power if we have power surplus
 	if(MAD_spammable_buildings_that_use_power()) return;
 	// in magic: pylon management
-	pylon_management();
+	pylon_management(80);
 	// slaver
 	if(slaver_management()) return;
 	// build storage for capped buildings
@@ -2325,7 +2688,7 @@ function bioseed_build_on_red_planet(){
 	let max=evolve.global.space.spaceport.s_max;
 	let cur=evolve.global.space.spaceport.support;
 	if(cur>=max) return build_structure(['space-spaceport','space-red_tower']);
-	list=['space-exotic_lab','space-living_quarters','space-red_mine','space-biodome'];
+	let list=['space-exotic_lab','space-living_quarters','space-red_mine','space-biodome'];
 	// don't build fabrications until we have subspace beacons in interstellar-land
 	// also don't build fabrications when we are saving up wrought iron for embassy
 	if(has_tech('luna',3)) list.push('space-fabrication'),list.push('space-nav_beacon');
@@ -2342,7 +2705,8 @@ function bioseed_build_on_belt() {
 	// build up to 4 elerium ships in bioseed land
 	// if we go the world collider route, let interstellar_main build more
 	if(get_building_count('space','elerium_ship')>=4) return false;
-	let max=evolve.global.space.space_station.s_max;
+	// unpopulated space miner jobs decrease max, use count instead
+	let max=evolve.global.space.space_station.count*3;
 	let cur=evolve.global.space.space_station.support;
 	// max-1 because elerium ships use 2 support
 	if(cur>=max-1) return build_structure(['space-space_station']);
@@ -2362,7 +2726,7 @@ function bioseed_main() {
 	tax_morale_balance(20,55);
 	if(spy_management()) return true;
 	if(research_tech(bioseed_avoidlist.union(tech_avoid_safeguard))) return true;
-	pylon_management();
+	pylon_management(80);
 	if(synth_management()) return true;
 	if(slaver_management()) return true;
 	bioseed_factory_management();
@@ -2499,15 +2863,18 @@ function interstellar_replicator_management() {
 	else if(evolve.global.portal.fortress.patrols==0) {
 		// infernite discovered, but no patrols in hell yet: infernite
 		matter_replicator_management('Infernite');
+	} else if(evolve.global.arpa.hasOwnProperty('syphon') && evolve.global.arpa.syphon.rank*100+evolve.global.arpa.syphon.complete>0 && evolve.global.arpa.syphon.rank*100+evolve.global.arpa.syphon.complete<8000) {
+		// set to crystals when building mana syphons
+		matter_replicator_management('Crystal');
 	} else {
-		// we have patrols in hell: use priority to determine resource
+	// we have patrols in hell: use priority to determine resource
 		matter_replicator_management();
 	}
 	return false;
 }
 
 // TODO would be beneficial to speed this up. currently builds one at a time
-// though we can abuse a weakness in the script by holding multiplier keys
+// though we can abuse the script's ability to be affected by multiplier keys
 function build_world_collider() {
 	if(evolve.global.space.world_collider.count==1859) return false;
 	return build_structure(['space-world_collider']);
@@ -2534,23 +2901,25 @@ function interstellar_factory_management() {
 		if(sum<num) nanotubes++,sum++;
 		if(sum<num && has_stanene) stanene++,sum++;
 	}
-	list=['Furs',furs,'Alloy',alloy,'Polymer',polymer,'Nano',nanotubes];
+	let list=['Furs',furs,'Alloy',alloy,'Polymer',polymer,'Nano',nanotubes];
 	if(has_stanene) list.push('Stanene'),list.push(stanene);
 	set_factory_production(list);
 }
 
 function interstellar_buildings_we_always_want() {
 	// bottlenecks
-	if(!building_exists('interstellar','starport') && build_structure(['interstellar-alpha_mission'])) return true;
-	if(!building_exists('interstellar','xfer_station') && build_structure(['interstellar-proxima_mission'])) return true;
-	if(!building_exists('interstellar','nexus') && build_structure(['interstellar-nebula_mission'])) return true;
-	if(!building_exists('interstellar','neutron_miner') && build_structure(['interstellar-neutron_mission'])) return true;
-	if(!building_exists('interstellar','farpoint') && build_structure(['interstellar-blackhole_mission'])) return true;
+	if((!building_exists('interstellar','starport') || get_building('interstellar','starport').count==0) && build_structure(['interstellar-alpha_mission'])) return true;
+	if((!building_exists('interstellar','xfer_station') || get_building('interstellar','xfer_station').count==0) && build_structure(['interstellar-proxima_mission'])) return true;
+	if((!building_exists('interstellar','nexus') || get_building('interstellar','nexus').count==0) && build_structure(['interstellar-nebula_mission'])) return true;
+	if((!building_exists('interstellar','citadel') || get_building('interstellar','citadel').count==0) && build_structure(['interstellar-neutron_mission'])) return true;
+	if((!building_exists('interstellar','farpoint') || get_building('interstellar','farpoint').count==0) && build_structure(['interstellar-blackhole_mission'])) return true;
 	if(building_exists('interstellar','xfer_station') && get_building('interstellar','xfer_station').count==0 && build_structure(['interstellar-xfer_station'])) return true;
 	if(building_exists('interstellar','nexus') && get_building('interstellar','nexus').count==0 && build_structure(['interstellar-nexus'])) return true;
 	if(building_exists('portal','carport') && get_building('portal','carport').count==0 && build_structure(['portal-carport'])) return true;
 	// loose buildings in solar system that don't need support
-	if(build_structure(['space-satellite'])) return true;
+	// propellant depots are good, it's the cheapest oil storage, which lets us
+	// get more carports
+	if(build_structure(['space-satellite','space-propellant_depot'])) return true;
 	if(build_structure(['space-ziggurat','space-red_factory'])) return true;
 	if(build_structure(['space-geothermal','space-spc_casino','space-gas_mining','space-outpost','space-e_reactor'])) return true;
 	// TODO don't build marine garrisons and oil extractors when building embassy
@@ -2568,7 +2937,7 @@ function interstellar_build_on_belt() {
 	let max=evolve.global.space.space_station.count*3;
 	let cur=evolve.global.space.space_station.support;
 	if(cur>=max) return build_structure(['space-space_station']);
-	return build_structure(['space-iron_ship']);;
+	return build_structure(['space-iron_ship']);
 }
 
 function interstellar_build_on_alpha_centauri() {
@@ -2577,9 +2946,9 @@ function interstellar_build_on_alpha_centauri() {
 	let max=evolve.global.interstellar.starport.s_max;
 	let cur=evolve.global.interstellar.starport.support;
 	if(cur>=max) {
-		list=['interstellar-starport'];
+		let list=['interstellar-starport'];
 		// TODO don't build when building embassy
-		if(building_exists('interstellar','xfer_station')) list.push('interstellar','xfer_station');
+		if(building_exists('interstellar','xfer_station')) list.push('interstellar-xfer_station');
 		return build_structure(list);
 	}
 	return build_structure(['interstellar-mining_droid','interstellar-processing','interstellar-g_factory','interstellar-fusion']);
@@ -2587,6 +2956,7 @@ function interstellar_build_on_alpha_centauri() {
 
 function interstellar_build_on_helix_nebula() {
 	// before stellar engine
+	if(!building_exists('interstellar','nexus')) return false;
 	let max=evolve.global.interstellar.nexus.s_max;
 	let cur=evolve.global.interstellar.nexus.support;
 	if(cur>=max) {
@@ -2607,10 +2977,10 @@ function mining_droid_management() {
 	// all in adamantite for the first 5
 	if(num<=5) set_mining_droid_production(['adam',num]);
 	// number 6 and 7 in uranium and coal. at 7 we depopulate coal miners
-	if(num==6) set_mining_droid_production(['adam',num-1,'uran',1]);
+	else if(num==6) set_mining_droid_production(['adam',num-1,'uran',1]);
 	// into adamantite again until 11
-	if(num<=11) set_mining_droid_production(['adam',num-2,'uran',1,'coal',1]);
-	if(num>=12 && num<1000) {
+	else if(num<=11) set_mining_droid_production(['adam',num-2,'uran',1,'coal',1]);
+	else if(num>=12 && num<1000) {
 		// baseline: 10 adamantite, 1 coal, 1 uranium
 		let left=num-12;
 		let adam=10,uran=1,coal=1,alum=0;
@@ -2619,13 +2989,19 @@ function mining_droid_management() {
 		coal+=Math.trunc(left*0.3); left-=Math.trunc(left*0.3);
 		alum+=Math.trunc(left*0.4); left-=Math.trunc(left*0.4);
 		alum+=left;
-		set_mining_droid_production(['adam',adam,'uran',uran,'coal',coal,'alum',alum]);	}
+		set_mining_droid_production(['adam',adam,'uran',uran,'coal',coal,'alum',alum]);
+	}
 }
 
 function interstellar_manage_population() {
 	// depopulate coal miners if mining droid produces both uranium and coal
 	let need_coal_miners=true;
-	if(building_exists('interstellar','mining_droid') && evolve.global.interstellar.mining_droid.coal>0 && evolve.global.interstellar.mining_droid.uran>0) need_coal_miners=false;
+	if(building_exists('interstellar','mining_droid') && evolve.global.interstellar.mining_droid.coal>0 && evolve.global.interstellar.mining_droid.uran>0) {
+		need_coal_miners=false;
+		// turn off power to coal mines
+		let onoff=get_enabled_disabled('city-coal_mine');
+		while(onoff[0]>0) disable_building('city-coal_mine'),onoff[0]--;
+	}
 	let surveyor='none';
 	// 1 surveyor if sports governor and we have a carport and we haven't started hell
 	// if we have soldiers, max surveyors
@@ -2639,7 +3015,7 @@ function interstellar_manage_population() {
 	if(get_building('space','iron_ship').count>=15) {
 		need_miners=false;
 		// turn off power to mines
-		onoff=get_enabled_disabled('city-mine');
+		let onoff=get_enabled_disabled('city-mine');
 		while(onoff[0]>0) disable_building('city-mine'),onoff[0]--;
 	}
 	// TODO focus crafters now
@@ -2672,11 +3048,86 @@ function interstellar_buy_minor_traits() {
 	arpa_genetics_buy_genes(list);
 }
 
+function interstellar_hell_management(reset_type) {
+	if(!tab_exists('portal')) return false;
+	if(!building_exists('portal','turret')) return false;
+	if(!building_exists('portal','sensor_drone')) return false;
+	// manage troops
+	// keep an eye on mercenaries cost
+	// keep an eye on number of peacekeepers
+	// reduce attractor beacons if we're struggling
+	// increase attractor beacons if peacekeepers=max and mercenaries cost low
+	// increase number of patrols based on some unknown criteria
+	// (when we have many attractor beacons)
+
+	// move soldiers to hell when we have >=125 total soldiers and >=8 turrets,
+	// all soldiers are trained, none are wounded
+	// TODO check that we actually have 75 free soldiers after crew etc are
+	// taken into account
+	let q=document.getElementById('fort');
+	if(q==null) { console.log('sanity error, hell doesn\'t exist'); return false; }
+	if(evolve.global.portal.fortress.patrols==0 && evolve.global.civic.garrison.max>124 && evolve.global.civic.garrison.max==evolve.global.civic.garrison.workers && evolve.global.civic.garrison.wounded==0 && get_building('portal','turret').count>7) {
+		let q=document.getElementById('fort');
+		if(q==null) { console.log('sanity error, hell doesn\'t exist'); return false; }
+		// send 75 soldiers to hell (40 to patrols, 35 to stationed)
+		for(let i=0;i<75;i++) q.__vue__.aNext();
+		// set patrol size to 4
+		let patrolsize=evolve.global.portal.fortress.patrol_size;
+		while(patrolsize<4) q.__vue__.patSizeInc(),patrolsize++;
+		while(patrolsize>4) q.__vue__.patSizeDec(),patrolsize--;
+		// set 10 patrols
+		for(let i=0;i<10;i++) q.__vue__.patInc();
+
+		// vue functions:
+		// hire(): hire mercenary
+		// hireLabel(): mercenary cost string
+		// patDec(): decrease number of patrols
+		// patInc(): increase number of patrols
+		// patSizeDec(): decrease patrol size
+		// patSizeInc(): increase patrol size
+		// threatLevel(): threat level string (no number)
+		// aLast(): remove 1 soldier from fortress
+		// aNext(): assign 1 soldier to fortress
+		// defense(): "fortress defense rating" string (no number)
+		return true;
+	}
+
+	// fortress is manned, manage fortress
+	if(evolve.global.portal.fortress.hasOwnProperty('assigned') && evolve.global.portal.fortress.assigned>0) {
+		let dead=evolve.global.civic.garrison.max-evolve.global.civic.garrison.workers;
+		if(dead>settings.peacekeeper_buffer) {
+			// hire mercenary, then remove 1 from fortress to stay at 35
+			let cost=get_hell_mercenary_cost();
+			if(get_resource('Money').amount>cost) {
+				q.__vue__.hire();
+				q.__vue__.aLast();
+				return true;
+			}
+		}
+	}
+
+	// build up to 25 turrets (should be enough for forever)
+	if(get_building('portal','turret').count<25 && build_structure(['portal-turret'])) return true;
+	// always try to buy carport and sensor drone
+	if(build_structure(['portal-carport','portal-sensor_drone'])) return true;
+	return false;
+}
+
+function interstellar_trade_route_management() {
+	// magic: buy crystals
+	if(evolve.global.race.universe=='magic') set_trade_routes_percent(['Crystal',100]);
+	// otherwise: buy uranium
+	else set_trade_routes_percent(['Uranium',100]);
+}
+
 function interstellar_main(reset_type) {
 	if(handle_modals()) return true;
 	MAD_set_nanite_input();
 	interstellar_manage_population();
-	pylon_management();
+	interstellar_trade_route_management();
+	// less mana on rituals when doing vacuum collapse
+	if(reset_type=='blackhole' && evolve.global.race.universe=='magic' && evolve.global.portal?.fortress?.patrols>0 && has_tech('veil',2)) pylon_management(40);
+	else pylon_management(80);
 	interstellar_replicator_management();
 	interstellar_buy_minor_traits();
 	if(synth_management()) return true;
@@ -2701,6 +3152,19 @@ function interstellar_main(reset_type) {
 	if(interstellar_build_on_alpha_centauri()) return true;
 	if(interstellar_build_on_helix_nebula()) return true;
 	if(interstellar_build_on_belt()) return true;
+	if(interstellar_hell_management(reset_type)) return true;
+	// if morale is capped, build monument if we can afford it at once
+	if(evolve.global.city.morale.potential>evolve.global.city.morale.current) {
+		let low=can_afford_arpa('monument');
+		if(low==100 && build_arpa_project('monument')) return true;
+	}
+	// we're in magic, blackhole reset, have soldiers in hell, have researched
+	// calibrated sensors: start building mana syphons i guess
+	// TODO should probably build up infernite production a bit? more carports,
+	// more sensor drones
+	if(has_tech('infernite',4) && reset_type=='blackhole' && evolve.global.race.universe=='magic' && evolve.global.portal?.fortress?.patrols>0 && has_tech('veil',2)) {
+		if(build_arpa_project('syphon')) return true;
+	}
 	// build storage for capped buildings
 	if(build_storage_if_capped(MAD_capped_list.union(bioseed_capped_list).union(interstellar_capped_list))) return true;
 
@@ -2818,23 +3282,574 @@ function pillar_bot() {
 // - send fastest corvettes to eris, enough to scan
 // - send big ships to kuiper and triton to have non-shitty production
 
+//---------------------------------------------------
+// code for lone survivor, farming runs in antimatter
+//---------------------------------------------------
+
+// use a custom with smart (mandatory), intelligent, lawless,
+// production and mining buffs and a bunch of garbage
+// traits that don't have an effect here
+// the script utilizes wish (useful),
+// ocular powers (hard labor jobs +15% is good i guess) 
+// don't take ravenous, please don't take unorganized
+// use a trashed planet
+
+// antimatter times:
+// script finishes in 967 days on extreme progression
+// 11300 days on my progression with a general tp4 custom (not so good)
+
+// i guess there are 2 sets of fanaticism and antropology depending on transcendence?
+// only tested with transcendence 2
+let LS_researches_1=new Set(['fanaticism','alt_fanaticism','alt_anthropology','replicator','outpost_boost','minor_wish','governor','ancient_theology','major_wish','deify','deify_alt']);
+let LS_researches_2=new Set(['tau_cultivation','tau_manufacturing']);
+let LS_researches_3=new Set(['iso_gambling','cultural_center']);
+let LS_researches_3a=new Set(['womling_unlock']);
+let LS_researches_4=new Set(['womling_fun','womling_lab']);
+let LS_researches_5=new Set(['system_survey','asteroid_analysis','shark_repellent','belt_mining','adv_belt_mining','outer_tau_survey']);
+let LS_researches_6=new Set(['alien_research','womling_gene_therapy','food_culture','womling_mining','advanced_refinery','advanced_pit_mining','womling_firstaid','advanced_asteroid_mining']);
+let LS_researches_7=new Set(['garden_of_eden']);
+
+/* useless techs (i think):
+mythology -> archaeology -> merchandising
+indoctrination -> missionary -> zealotry
+study ancients -> genetic encoding (boosts exo labs, useless?)
+genetic infusion (boosts ziggurats, useless)
+
+space whaling (can replicate oil when close to 0)
+womling logistics (comes too late)
+advanced material synthesis (no need to actually produce quantium)
+*/
+
+// script is largely based on a build order image found on discord by rxdg
+
+function LS_minor_wish_for_fame() {
+	if(!has_trait('wish') || !can_minor_wish()) return false;
+	wish=get_wish_struct();
+	// minor wish until we have 10% fame
+	if(wish.fame!=10) {
+		make_minor_wish('famous');
+		return true;
+	}
+	return false;
+}
+
+function LS_build_initial_monuments() {
+	// get cost: [resource,amount]
+	let cost=get_cost_of_next_monument();
+	// stop as soon as the next monument would leave us with too little storage
+	if(cost[0]=='Steel') {
+		if(get_resource('Steel').amount-cost[1]>3000000) return build_arpa_project('monument');
+	} else if(cost[0]=='Cement') {
+		if(resource_exists('Cement') && get_resource('Cement').amount-cost[1]>2000000) return build_arpa_project('monument');
+	} else if(cost[0]=='Stone') {
+		if(resource_exists('Stone') && get_resource('Stone').amount-cost[1]>2000000) return build_arpa_project('monument');
+	} else if(cost[0]=='Chrysotile') {
+		if(resource_exists('Chrysotile') && get_resource('Chrysotile').amount-cost[1]>2000000) return build_arpa_project('monument');
+	} else if(can_afford_arpa('monument')==100) return build_arpa_project('monument');
+	return false;
+}
+
+function LS_clay_monuments() {
+	// get cost: [resource,amount]
+	let cost=get_cost_of_next_monument();
+	if(cost[0]=='Stone' && can_afford_arpa('monument')==100) return build_arpa_project('monument');
+	return false;
+}
+
+// return our current job as a string
+// TODO make sure it can return our current crafting job
+// probably in evolve.global.city.foundry
+function LS_get_guy() {
+	for(job in evolve.global.civic) if(evolve.global.civic[job].hasOwnProperty('job')) {
+		let e=evolve.global.civic[job];
+		if(e.workers==1) return e.job;
+	}
+	return null;
+}
+
+function LS_set_job(job,amount) {
+	if(amount!=0 && amount!=1) console.log('sanity error, not 0 or 1');
+	let q=document.getElementById('civ-'+job);
+	if(q==null) {
+		// job not found as normal job, look at crafters
+		q=document.getElementById('craft'+job);
+		if(q==null) console.log('LS_set_job sanity error, no job');
+		q.nextSibling().childNodes[amount].click();
+	}
+	q.childNodes[1].childNodes[amount].click();
+}
+
+// set new job
+function LS_set_guy(job) {
+	let previous=LS_get_guy();
+	if(previous==job) return;
+	LS_set_job(previous,0);
+	LS_set_job(job,1);
+}
+
+function ls_build_tauceti_phase1() {
+	let cur=evolve.global.tauceti.orbital_station.support;
+	let max=evolve.global.tauceti.orbital_station.s_max;
+	// more power issues outside of antimatter
+	if(evolve.global.race.universe!='antimatter' && LS_num('orbital_station')==3 && LS_num('fusion_generator')<2) {
+		return build_structure(['fusion_generator']);
+	}
+	if(cur>=max-1 && LS_num('orbital_station')<5) return build_structure(['tauceti-orbital_station']);
+	if(LS_num('colony')<7) return build_structure(['tauceti-colony']);
+	return false;
+}
+
+function ls_build_tauceti_phase2() {
+	let cur=evolve.global.tauceti.orbital_station.support;
+	let max=evolve.global.tauceti.orbital_station.s_max;
+	if(cur>=max && LS_num('orbital_station')<6) return build_structure(['tauceti-orbital_station']);
+	if(LS_num('tau_factory')<3)	return build_structure(['tauceti-tau_factory']);
+	return false;
+}
+
+function ls_build_tauceti_phase3() {
+	let cur=evolve.global.tauceti.orbital_station.support;
+	let max=evolve.global.tauceti.orbital_station.s_max;
+	if(cur>=max-1) {
+		if(LS_num('orbital_station')<8 && build_structure(['tauceti-orbital_station'])) return true;
+		if(LS_num('tau_farm')<1 && build_structure(['tauceti-tau_farm'])) return true;
+	}
+	if(cur<max-1 && LS_num('colony')<10 && build_structure(['tauceti-colony'])) return true;
+	if(cur<max && LS_num('infectious_disease_lab')<1 && build_structure(['tauceti-infectious_disease_lab'])) return true;
+	return false;
+}
+
+// casinos need only furs
+// infectious disease lab wants 8.5m alloy and 12-13m polymer
+// cultural centers need only polymer
+function LS_set_factory_phase2() {
+	let n=get_num_factory_production_lines();
+	if(LS_num('tauceti_casino')<12 || LS_num('colony')<10) set_factory_production(['Furs',n]);
+	else if(LS_num('infectious_disease_lab')<1 && get_resource('Alloy').amount<9600000) set_factory_production(['Alloy',n]);
+	else set_factory_production(['Polymer',n]);
+}
+
+function LS_set_factory_phase3() {
+	let n=get_num_factory_production_lines();
+	if(get_resource('Furs').amount<9000000 && LS_num('tauceti_casino')<17) set_factory_production(['Furs',n]);
+	else if(get_resource('Alloy').amount<10000000) set_factory_production(['Alloy',n]);
+	else set_factory_production(['Polymer',n]);
+}
+
+function LS_set_factory_phase4() {
+	let n=get_num_factory_production_lines();
+	let n2=Math.trunc(n/2);
+	set_factory_production(['Polymer',n-n2,'Stanene',n2]);
+}
+
+function LS_set_factory_phase5() {
+	let n=get_num_factory_production_lines();
+	set_factory_production(['Nano',n]);
+}
+
+function LS_set_factory_phase6() {
+	let n=get_num_factory_production_lines();
+	let n2=Math.trunc(n/2);
+	set_factory_production(['Nano',n-n2,'Stanene',n2]);
+}
+
+function LS_set_factory_res(res) {
+	let n=get_num_factory_production_lines();
+	set_factory_production([res,n]);
+}
+
+function LS_womling_phase1() {
+	let cur=evolve.global.tauceti.orbital_platform.support;
+	let max=evolve.global.tauceti.orbital_platform.s_max;
+	if(cur>=max) {
+		if(LS_num('orbital_platform')<8 && build_structure(['tauceti-orbital_platform'])) return true;
+		return false;
+	}
+	if(LS_num('womling_farm')<5 && build_structure(['tauceti-womling_farm'])) return true;
+	if(LS_num('womling_mine')<6 && build_structure(['tauceti-womling_mine'])) return true;
+	if(LS_num('womling_village')<10 && build_structure(['tauceti-womling_village'])) return true;
+	if(LS_num('womling_fun')<3 && build_structure(['tauceti-womling_fun'])) return true;
+	if(LS_num('overseer')<6 && build_structure(['tauceti-overseer'])) return true;
+	return false;
+}
+
+function LS_num(id) { return get_building('tauceti',id)?.count; }
+
+function lone_survivor_bot() {
+	// lower power buffer, power is typically not fluctuating
+	settings.replicator_power_buffer=2;
+	// TODO turn off gene sequencing
+	if(handle_modals()) return;
+	matter_replicator_management();
+	// our guy is a banker and wish is available: with for money
+	if(has_trait('wish') && has_tech('wish',2) && can_major_wish() && evolve.global.civic.banker.max>0 && evolve.global.civic.banker.workers==1) {
+		make_major_wish('money');
+		return;
+	}
+	if(has_trait('wish') && has_tech('wish',1) && can_minor_wish() && evolve.global.civic.banker.max>0 && evolve.global.civic.banker.workers==1) {
+		make_minor_wish('money');
+		return;
+	}
+	if(!has_tech('fanaticism',1)) {
+		// set some stuff at the very beginning
+		if(MAD_change_government('anarchy','technocracy')) return;
+		set_tax_percent(0);
+		// professor during the initial techs
+		LS_set_guy('professor');
+	}
+	set_ocular_power(['t','c','w']);
+	// assign these every call in case they get changed
+	if(evolve.global.race.hasOwnProperty('servants')) {
+		// all servants in scavenger if we can
+		let job='';
+		if(evolve.global.civic.scavenger.display) job='servant-scavenger';
+		else if(evolve.global.civic.quarry_worker.display) job='servant-quarry_worker';
+		else if(evolve.global.civic.crystal_miner.display) job='servant-crystal_miner';
+		else if(evolve.global.civic.forager.display) job='servant-forager';
+		else if(evolve.global.civic.farmer.display) job='servant-farmer';
+		else if(evolve.global.civic.lumberjack.display) job='servant-lumberjack';
+		else console.log('i give up, no job for servants');
+		assign_jobs_percent(document.getElementById('servants'),[job,100],evolve.global.race.servants.max);
+		// all skilled servants on wrought iron
+		assign_jobs_percent(document.getElementById('skilledServants'),['scraftWrought_Iron',100],evolve.global.race.servants.smax);
+	}
+	if(has_trait('shapeshifter') && get_mimic()=='none' && set_mimic(['heat','avian','plant','small'])) return;
+	if(set_governor('bureaucrat')) return;
+	if(set_governor_task('bal_storage')) return;
+	if(LS_minor_wish_for_fame()) return;
+	// major wish for money if we are somewhat low on money (half of cap)
+	// but at most 500M
+	if(has_trait('wish') && can_major_wish() && evolve.global.civic.banker.max>0 && evolve.global.civic.banker.workers==0 && get_resource('Money').amount<5e8 && get_resource('Money').amount<get_resource('Money').max*0.55) {
+		// setting guy to banker and available wish is the cue for wishing for money
+		LS_set_guy('banker');
+		return;
+	} else if(has_trait('wish') && can_major_wish()) {
+		// if money is good, wish for resources
+		// in my last (very slow) run i never had money problems
+		make_major_wish('res');
+		return;
+	}
+	// whenever minor wish is available and we have 10% fame: resources i guess
+	// TODO if we're low on tech and are researching something wish for knowledge could be good
+	if(has_trait('wish') && can_minor_wish() && get_wish_struct().fame==10) {
+		if(evolve.global.civic.banker.workers==0 && get_resource('Money').amount<5e8 && get_resource('Money').amount<get_resource('Money').max*0.55) {
+			LS_set_guy('banker');
+			return;
+		} else {
+			make_minor_wish('res');
+			return;
+		}
+	}
+	// initial techs
+	if(!has_tech('outpost_boost',1)) {
+		// build monuments, don't go below 3 mill steel
+		if(LS_build_initial_monuments()) return;
+		// set matter replicator to chrysotile
+		matter_replicator_management('Chrysotile');
+		LS_set_guy('professor');
+		if(research_given_techs(LS_researches_1)) return;
+//		return build_crates();
+		return;
+	}
+	// build 5 orbital, 7 colony, 12 casino, 2 generator before continuing script
+	if(LS_num('orbital_station')<5 || LS_num('colony')<7 || LS_num('tauceti_casino')<12 || LS_num('fusion_generator')<2) {
+		if(resource_exists('Cement') && get_resource('Cement').amount<1000000) matter_replicator_management('Cement');
+		else matter_replicator_management('Chrysotile');
+		LS_set_guy('pit_miner');
+		if(LS_num('fusion_generator')<2 && build_structure(['tauceti-fusion_generator'])) return;
+		if(LS_num('tauceti_casino')<12 && build_structure(['tauceti-tauceti_casino'])) return;
+		ls_build_tauceti_phase1();
+		// build crates while stalling
+		// or should i? storage doesn't matter a lot
+//		return build_crates();
+		return;
+	}
+	// next techs
+	if(!has_tech('tau_home',8)) {
+		LS_set_guy('professor');
+		matter_replicator_management('Chrysotile');
+		if(research_given_techs(LS_researches_2)) return;
+//		return build_crates();
+		return;
+	}
+	if(LS_num('orbital_station')<6 || LS_num('tau_factory')<3) {
+		// corpocracy now i guess, but only if we have the traits to change again soon
+		if(has_trait('lawless') && !has_trait('unorganized') && MAD_change_government('technocracy','corpocracy')) return;
+		LS_set_factory_phase2();
+		LS_set_guy('pit_miner');
+		if(LS_num('orbital_station')<6 && get_resource('Helium_3').amount<250000) matter_replicator_management('Helium_3');
+		else matter_replicator_management('Chrysotile');
+		ls_build_tauceti_phase2();
+//		return build_crates();
+		return;
+	}
+	// build 8 orbital, 1 farm, 10 colony, 1 sci lab before continuing script
+	// replicate helium until 7 orbital
+	if(LS_num('orbital_station')<8 || LS_num('tau_farm')<1 || LS_num('colony')<10 || LS_num('infectious_disease_lab')<1) {
+		if(LS_num('orbital_station')<7 || get_resource('Helium_3').amount<300000) matter_replicator_management('Helium_3');
+		else if(LS_num('infectious_disease_lab')<1 && get_resource('Unobtainium').amount<17000) matter_replicator_management('Unobtainium');
+		else if(LS_num('orbital_station')<8) matter_replicator_management('Helium_3');
+		if(resource_exists('Cement') && get_resource('Cement').amount<1000000) LS_set_guy('cement_worker');
+		else LS_set_guy('pit_miner');
+		LS_set_factory_phase2();
+		ls_build_tauceti_phase3();
+//		return build_crates();
+		return;
+	}
+	// next set of techs: pit bosses, cultural center, meet the neighbours
+	if(!has_tech('tau_culture',1)) {
+		matter_replicator_management('Unobtainium');		
+		// we have scientists now
+		LS_set_guy('scientist');
+		LS_set_factory_phase2();
+		if(research_given_techs(LS_researches_3)) return;
+//		return build_crates();
+		return;
+	}
+	// factories: 9m fur, 10m alloy, then poly
+	// 7 cultural
+	if(LS_num('tau_cultural_center')<7) {
+		matter_replicator_management('Unobtainium');		
+		LS_set_guy('pit_miner');
+		LS_set_factory_phase2();
+		if(build_structure(['tauceti-tau_cultural_center'])) return true;
+//		return build_crates();
+		return;
+	}
+	// meet neighbours after cultural center
+	if(!has_tech('tau_red',4)) {
+		matter_replicator_management('Unobtainium');		
+		LS_set_guy('scientist');
+		LS_set_factory_phase3();
+		if(research_given_techs(LS_researches_3a)) return;
+//		return build_crates();
+		return;
+	}
+	// TODO guide says the following part is done with avian. my custom is
+	// currently not set up for the heat->avian->heat change
+	// change the following code after i've changed by custom
+	// 17 casino, 3 emissary, 4 repository, clay monuments
+	// 3 orbital platforms to support emissaries
+	if(!has_tech('tau_red',5) || LS_num('tauceti_casino')<17 || LS_num('overseer')<3 || LS_num('repository')<4 || LS_num('orbital_platform')<3 || !has_tech('tau_red',5)) {
+		if(get_resource('Helium_3').amount<100000) matter_replicator_management('Helium_3');
+		else matter_replicator_management('Unobtainium');
+		// emergency production of cement
+		// also emergency production of knowledge if we have ravenous and can't contact
+		if(resource_exists('Cement') && get_resource('Cement').amount<5000000) LS_set_guy('cement_worker');
+		else if(has_trait('ravenous') && !has_tech('tau_red',5)) LS_set_guy('scientist');
+		else LS_set_guy('pit_miner');
+		LS_set_factory_phase3();
+		// using up clay was a bad idea in my tests
+//		if(LS_clay_monuments()) return;		
+		if(LS_num('tauceti_casino')<17 && build_structure(['tauceti-tauceti_casino'])) return;
+		if(LS_num('repository')<4 && build_structure(['tauceti-repository'])) return;
+		// not advisable to do other than contact
+		// subjugate: costs 560M money which takes too long
+		// introduce: change to scientist temporarily, it isn't too bad.
+		//            loyalty buildings cost titanium which is slightly bad
+		if(build_structure(['tauceti-contact','tauceti-introduce','tauceti-subjugate'])) return;
+		// if contact:   evolve.global.race.womling_friend=1
+		// if introduce: evolve.global.race.womling_god=1
+		// if subjugate: evolve.global.race.womling_lord=1
+		if(LS_num('orbital_platform')<3 && build_structure(['tauceti-orbital_platform'])) return;
+		if(LS_num('overseer')<3 && build_structure(['tauceti-overseer'])) return;
+//		return build_crates();
+		return;
+	}
+	// avian supposed done now
+	// 3 platform 1 mine 1 farm 4 village
+	if(LS_num('orbital_platform')<3 || LS_num('womling_mine')<1 || LS_num('womling_farm')<1 || LS_num('womling_village')<4) {
+		matter_replicator_management('Helium_3');
+		if(resource_exists('Cement') && get_resource('Cement').amount<5000000) LS_set_guy('cement_worker');
+		else LS_set_guy('pit_miner');
+		LS_set_factory_phase3();
+		if(LS_num('orbital_platform')<3 && build_structure(['tauceti-orbital_platform'])) return;
+		if(LS_num('womling_mine')<1 && build_structure(['tauceti-womling_mine'])) return;
+		if(LS_num('womling_farm')<1 && build_structure(['tauceti-womling_farm'])) return;
+		if(LS_num('womling_village')<4 && build_structure(['tauceti-womling_village'])) return;
+//		return build_crates();
+		return;
+	}
+	// need womling tech level 1 for tau survey
+	// research womling lab
+	if(!has_tech('tau_red',7)) {
+		matter_replicator_management('Oil');
+		LS_set_factory_phase4();
+		if(get_resource('Knowledge').amount<get_resource('Knowledge').max) LS_set_guy('scientist');
+		else LS_set_guy('pit_miner');
+		if(research_given_techs(LS_researches_4)) return;
+//		return build_crates();
+		return;
+	}
+	// build womling lab and tavern
+	if(LS_num('womling_lab')<1 || LS_num('womling_fun')<1) {
+		if(get_resource('Elerium').amount<310 && LS_num('womling_lab')<1) matter_replicator_management('Elerium');
+		else if(get_resource('Helium_3').amount>get_resource('Oil').amount) matter_replicator_management('Oil');
+		else matter_replicator_management('Helium_3');
+		LS_set_factory_phase4();
+		if(resource_exists('Cement') && get_resource('Cement').amount<5000000) LS_set_guy('cement_worker');
+		else LS_set_guy('pit_miner');
+		if(LS_num('womling_lab')<1 && build_structure(['tauceti-womling_lab'])) return;
+		if(LS_num('womling_fun')<1 && build_structure(['tauceti-womling_fun'])) return;
+//		return build_crates();
+		return;
+	}
+	// research tau survey, shark rep, belt mining+adv, survey outer
+	// patrol ship needed or production becomes 0
+	// we're on our scientist, but start building refineries and stuff
+	// build 5 ore ref, 5 extractors, set to neutronium and orichalcum
+	// TODO the number of ore refs and extractors might need adjustment
+	if(!has_tech('tau_roid',5) || !has_tech('tau_gas2',1) || LS_num('patrol_ship')<5) {
+		if(LS_num('patrol_ship')<5 && get_resource('Elerium').amount<333) matter_replicator_management('Elerium');
+		else if(get_resource('Helium_3').amount>get_resource('Oil').amount) matter_replicator_management('Oil');
+		else matter_replicator_management('Helium_3');
+		if(get_resource('Alloy').amount<1500000 && LS_num('mining_ship')<5) LS_set_factory_res('Alloy');
+		else LS_set_factory_phase4();
+		if(get_resource('Knowledge').amount<get_resource('Knowledge').max) LS_set_guy('scientist');
+		else LS_set_guy('pit_miner');
+		if(research_given_techs(LS_researches_5)) return;
+		// do the naming contest
+		if(build_structure(['tauceti-gas_contest','tauceti-roid_mission','tauceti-gas_contest-a8'])) return;
+		if(LS_num('refueling_station')<1 && build_structure(['tauceti-refueling_station'])) return;
+		if(LS_num('patrol_ship')<5 && build_structure(['tauceti-patrol_ship'])) return;
+		if(LS_num('ore_refinery')<2 && build_structure(['tauceti-ore_refinery'])) return;
+		if(LS_num('mining_ship')<5 && build_structure(['tauceti-mining_ship'])) return;
+		if(LS_num('fusion_generator')<3 && build_structure(['tauceti-fusion_generator'])) return;
+		// set sliders on extractor ship
+		if(LS_num('mining_ship')>=1) {
+			let goal_uncommon=95,uncommon=evolve.global.tauceti.mining_ship.uncommon;
+			let q=document.getElementById('iMiningShip');
+			if(q==null) console.error('error, no asteroid belt mining ship thingy');
+			if(uncommon!=goal_uncommon) {
+				while(uncommon<goal_uncommon) uncommon++,q.childNodes[4].childNodes[2].click();
+				while(uncommon>goal_uncommon) uncommon--,q.childNodes[4].childNodes[0].click();
+			}
+			// elerium=0, orichalcum=100
+			// we can replicate the tiny bit of elerium we need for upkeep, and for
+			// building the 2 buildings that cost elerium
+			let goal_rare=0,rare=evolve.global.tauceti.mining_ship.rare;
+			if(rare!=goal_rare && q.childNodes[6]!=null) {
+				while(rare<goal_rare) rare++,q.childNodes[6].childNodes[2].click();
+				while(rare>goal_rare) rare--,q.childNodes[6].childNodes[0].click();
+			}
+		}
+//		return build_crates();
+		return;
+	}
+	// build refuel, ore stuff, womling stuff
+	// the only reason we want more than 2 ore refineries is for smelters (steel)
+	// i should stop having each condition in like 3 places
+	// TODO the number of womling loyalty and morale buildings are hardcoded for contact
+	// if introduce we will suffer while waiting for titanium
+	// if subjugate we already suffered while waiting for money
+	if(LS_num('refueling_station')<1 || LS_num('ore_refinery')<4 || LS_num('mining_ship')<5 || LS_num('fusion_generator')<3 || LS_num('tau_farm')<3
+	   || LS_num('orbital_platform')<8 || LS_num('womling_farm')<5 || LS_num('womling_mine')<6 || LS_num('womling_village')<10 || LS_num('womling_fun')<3 || LS_num('overseer')<6) {
+		// have enough oil, coal, elerium to not die, otherwise helium-3
+		if(get_resource('Oil').amount<1000) matter_replicator_management('Oil');
+		else if(get_resource('Coal').amount<1000) matter_replicator_management('Coal');
+		else if(get_resource('Elerium').amount<100) matter_replicator_management('Elerium');
+		else matter_replicator_management('Helium_3');
+		// make nanotubes now. not sure if i should start earlier
+		if(get_resource('Alloy').amount<1500000 && LS_num('mining_ship')<5) LS_set_factory_res('Alloy');
+		else LS_set_factory_phase4();
+		LS_set_guy('pit_miner');
+		if(build_structure(['tauceti-gas_contest2','tauceti-gas_contest-b8'])) return;
+		if(LS_num('refueling_station')<1 && build_structure(['tauceti-refueling_station'])) return;
+		if(LS_num('ore_refinery')<4 && build_structure(['tauceti-ore_refinery'])) return;
+		// TODO last try spent ages on the 5th extractor ship, low on titanium.
+		// worth it i guess since orichalcum is a big bottleneck before reset
+		if(LS_num('mining_ship')<5 && build_structure(['tauceti-mining_ship'])) return;
+		if(LS_num('fusion_generator')<3 && build_structure(['tauceti-fusion_generator'])) return;
+		if(LS_num('tau_farm')<3 && build_structure(['tauceti-tau_farm'])) return;
+		if(LS_womling_phase1()) return;
+		// start on alien station now i guess
+		if(build_structure(['tauceti-alien_station_survey','tauceti-alien_station'])) return true;
+//		return build_crates();
+		return;
+	}
+	// build and repair alien space station
+	if(evolve.global.tauceti.alien_station?.count!=100) {
+		// chrysotile is the bottleneck
+		// or maybe my custom was bad at mining
+		if(get_resource('Oil').amount<1000) matter_replicator_management('Oil');
+		else if(get_resource('Coal').amount<1000) matter_replicator_management('Coal');
+		else if(get_resource('Elerium').amount<100) matter_replicator_management('Elerium');
+		else if(resource_exists('Chrysotile')) matter_replicator_management('Chrysotile');
+		else matter_replicator_management('Helium_3');
+		LS_set_factory_phase5();
+		LS_set_guy('pit_miner');
+		if(build_structure(['tauceti-alien_station_survey','tauceti-alien_station'])) return true;
+//		return build_crates();
+		return;
+	}
+	// decrypt alien space station, research all new techs
+	// build ringworld as we research techs
+	// probably good to build fusion generators to fuel matter replicator,
+	// no overlapping resources with ringworld except a bit of money
+	if(evolve.global.tauceti.ringworld?.count!=1000) {
+		// don't run out of upkeep resources + replicate bottleneck
+		// have a bank of 5100 elerium for garden of eden
+		if(get_resource('Oil').amount<1000) matter_replicator_management('Oil');
+		else if(get_resource('Coal').amount<1000) matter_replicator_management('Coal');
+		else if(get_resource('Elerium').amount<6000) matter_replicator_management('Elerium');
+		else if(get_resource('Chrysotile').amount<100000) matter_replicator_management('Chrysotile');
+		else if(get_resource('Adamantite').amount<110000) matter_replicator_management('Adamantite');
+		else if(get_resource('Bolognium').amount<4000) matter_replicator_management('Bolognium');
+		else matter_replicator_management('Orichalcum');
+		// produce some stanene
+		LS_set_factory_phase6();
+		// change back to pit miner after we have researched the useful techs
+		// and maybe some stored-up knowledge?
+		if(has_tech('tau_ore_mining',2) && get_resource('Knowledge').amount>=get_resource('Knowledge').max*0.01) LS_set_guy('pit_miner');
+		else LS_set_guy('scientist');
+		// change back to technocracy
+		if(MAD_change_government('corpocracy','technocracy')) return;
+		// turn on alien space station
+		onoff=get_enabled_disabled('tauceti-alien_space_station');
+		if(onoff[0]==0) enable_building('tauceti-alien_space_station');
+		// alien research
+		if(research_given_techs(LS_researches_6)) return;
+		// bottleneck: probably orichalcum
+		if(build_big_structure('tauceti-ringworld',1000)) return;
+		if(build_structure(['tauceti-fusion_generator'])) return;
+//		return build_crates();
+		return;
+	}
+	// last stretch
+	// we NEED technocracy or we'll have hard time raising the knowledge cap
+	// otherwise we need like 2 womling labs, 3 science labs and a bunch of
+	// supercolliders
+	if(MAD_change_government('corpocracy','technocracy')) return;
+	if(!has_tech('eden',2)) LS_set_guy('scientist');
+	else LS_set_guy('pit_miner');
+	if(research_given_techs(LS_researches_7)) return;
+	// we'll need around 1 mill more graphene. also keep bottlenecks in check
+	if(get_resource('Oil').amount<1000) matter_replicator_management('Oil');
+	else if(get_resource('Coal').amount<1000) matter_replicator_management('Coal');
+	else if(get_resource('Elerium').amount<5100) matter_replicator_management('Elerium');
+	else matter_replicator_management('Graphene');
+	// don't pull the trigger. not much of a reason to wait though
+//		return build_crates();
+		return;
+}
+
 //----------
 // launchers
 //----------
 
 // TODO when i can be bothered to make ui stuff, make a selection screen
 
-// comment out the desired type of run
+// un-comment out the desired type of run
 
-//setInterval(MAD_bot, 1000);
+//setInterval(MAD_bot, 1000);              // setup runs
 //setInterval(bioseed_bot, 1000);
-setInterval(blackhole_bot, 1000);
-//setInterval(pillar_bot, 1000);
-//setInterval(ascend_bot, 1000);
-//setInterval(demonic_infusion_bot, 1000);
+//setInterval(blackhole_bot, 1000);        // farm dark energy i guess
+//setInterval(pillar_bot, 1000);           // farm pillars
+//setInterval(ascend_bot, 1000);           // farm harmony crystals
+//setInterval(demonic_infusion_bot, 1000); // farm artifacts or blood stones
 //setInterval(apotheosis_bot, 1000);
-//setInterval(matrix_bot, 1000);
-//setInterval(retirement_bot, 1000);
-//setInterval(lone_survivor_bot, 1000);
+//setInterval(matrix_bot, 1000);           // farm servants
+//setInterval(retirement_bot, 1000);       // farm (skilled) servants
+setInterval(lone_survivor_bot, 1000);    // farm antiplasmids, phage, servants
 //setInterval(warlord_bot, 1000);
 //setInterval(truepath_orbital_decay_kamikaze_bot,1000);

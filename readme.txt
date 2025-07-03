@@ -10,8 +10,10 @@ script v1:
 script v2:
 - mad reset should work for all races
 - bioseed reset implemented
-- black hole reset under development. i assume lumber+plywood is eliminated
-  from all runs that go at least this far now
+- vacuum collapse implemented
+- lone survivor implemented
+* i assume lumber+plywood is eliminated from all runs that go to interstellar
+  or farther
 
 usage:
 - do the protoplasm phase manually
@@ -46,6 +48,7 @@ stuff that's supported:
 - smokehouse (carnivore races)
 - slaves (balorg)
 - rituals (magic universe)
+- ocular powers (eye-spector)
 - tax-morale balance, not using governor task
 - synth and nano, but it's a rough run with power struggles and apartments
   often losing power causing homelessness, even with late-game progression
@@ -72,11 +75,12 @@ stuff that's inefficient:
   builds a bunch of transmitters that can't be powered on because of power
   deficit, and for some reason the script doesn't build mines to get copper for
   coal powerplants. though the script gets out of this rut after ~250 days
+- script never crafts manually or buys resources when challenge genes disabled
 
 stuff that doesn't work:
-- some race-specific stuff not yet implemented (sacrificial altar, ocular
-  powers, wish)
-- some universe-specific stuff (authority) not yet implemented
+- some race-specific stuff not yet implemented (sacrificial altar, wish,
+  psychic powers)
+- some universe-specific stuff (authority, alchemy) not yet implemented
 - truepath not tested. most stuff might work up to long-range probes
 - probably some corner cases that can make the script trip up, like
   high population+horseshoes
@@ -86,8 +90,6 @@ stuff that doesn't work:
 - script struggles with blubber (oil production)
 
 bugs:
-- when spawning government change modal an additional empty modal might spawn
-- empty espionage modal can spawn which must be dismissed manually
 - in market and storage tabs there's sometimes garbage on the bottom
 - script overbuilds on mars which isn't supposed to happen
 - trading in MAD: sometimes sticks to titanium routes for too long and doesn't
