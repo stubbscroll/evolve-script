@@ -1,19 +1,25 @@
 mad.js        script v1, does only mad reset
-evolve.js     script v2, currently mad and bioseed
+evolve.js     script v2, currently mad, bioseed, vacuum collapse, lone survivor
 
 script that plays evolve
 https://pmotschmann.github.io/Evolve/
 
 script v1:
-- mad reset should work for all races
+- mad reset
 
 script v2:
-- mad reset should work for all races
+- mad reset implemented, should work on all races
 - bioseed reset implemented
 - vacuum collapse implemented
-- lone survivor implemented
+- lone survivor implemented, works in antimatter, struggles with power elsewhere,
+  can finish with user intervention
+- warlord under development, implemented up to spire
 * i assume lumber+plywood is eliminated from all runs that go to interstellar
   or farther
+
+roadmap:
+- warlord, black hole (non-magic), ascension, pillar in that order (probably)
+- if i actually manage to finish the above: matrix, retirement, ai apocalypse
 
 usage:
 - do the protoplasm phase manually
@@ -23,24 +29,33 @@ usage:
 - copy/paste the contents of evolve.js to the console
 - comment out the desired reset type, press enter
 - wait until the script reaches the reset point, then perform the reset manually
-- playing manually while using the script is not recommended. holding the
-  multiplier keys can multiply the script's actions and do unintended things
+- playing manually while the script is running is not recommended. holding the
+  multiplier keys can multiply some of the script's actions and do unintended
+  things
+- in warlord, don't enable/disable mech bays manually! the script uses
+  disabling to store state during the spire climb. disabling mech bays will
+  make the script enter a mode where it focuses on buying purifiers/ports/
+  base camps/more mech bays instead of just climbing the spire (the script
+  enters this mode at around level 25-30 if it's deemed profitable)
 
 system requirements:
 - in the game, set debug mode on and preload tab content on
 - no tampermonkey/greasemonkey needed (or supported)
 - a somewhat recent browser that supports the Set data structure in javascript
   (probably not older than 2024)
+- script assumes some power grid priorities:
+  - matter replicator always lowest
+  - spire: mech bay > port > base camp
 
 progression requirements:
-- governors unlocked. only 1 task used so far (assign crates). mech constructor
-  and mass ejector are going to be used when interstellar and spire are implemented
+- governors unlocked. task used: assign crates, mass ejector, mech constructor.
+  mech constructor must be unlocked in order to do warlord and t5+
 - 25 steel from technophobe (script doesn't try to get steel)
 - some metaprogression (no idea how much). i haven't really tested on lower
   progression
 
 supports:
-- servants and skilled servants
+- servants and skilled servants (highly recommended to have at least a few)
 
 stuff that's supported:
 - balorg, uses combat to get titanium
@@ -56,7 +71,7 @@ stuff that's supported:
 - ravenous taken into account. not tested for synth and other races with
   pseudo-food
 - matter replicator, not using governor task. as a side effect, replicator
-  power use is deducted from top left MW left
+  power use is deducted from top left MW
 - unicorn shrine. always builds 25 knowledge shrines, then metal only
 
 stuff that's inefficient:
