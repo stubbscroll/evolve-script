@@ -11,8 +11,8 @@ script v2:
 - mad reset implemented, should work on all races
 - bioseed reset implemented
 - vacuum collapse implemented
-- lone survivor implemented, works in antimatter, struggles with power elsewhere,
-  can finish with user intervention
+- lone survivor implemented, works in antimatter, struggles with power
+  elsewhere, can finish with user intervention
 - warlord under development, implemented up to spire
 * i assume lumber+plywood is eliminated from all runs that go to interstellar
   or farther
@@ -46,6 +46,9 @@ system requirements:
 - script assumes some power grid priorities:
   - matter replicator always lowest
   - spire: mech bay > port > base camp
+  - in civics, set default job to something we want to assign workers to
+    (quarry workers, scavengers etc). if set to unemployed or farmers, stuff
+    like sacrificial altar will not work
 
 progression requirements:
 - governors unlocked. task used: assign crates, mass ejector, mech constructor.
@@ -91,6 +94,14 @@ stuff that's inefficient:
   deficit, and for some reason the script doesn't build mines to get copper for
   coal powerplants. though the script gets out of this rut after ~250 days
 - script never crafts manually or buys resources when challenge genes disabled
+- bioseed: script is stalled on researching space probes, doesn't trade for
+  helium-3
+- bioseed: end of bioseed is slow, should build some supercolliders to reach
+  desired techs faster (it goes for quantum computing). should also change to
+  corpocracy (factory buff) for the last stretch
+- wendigo (soul eater trait): should treat hunters like farmers, depopulate
+  them unless food deficit at the start of a run. the relevant part of the code
+  is a terrible mess, so it's low priority
 
 stuff that doesn't work:
 - some race-specific stuff not yet implemented (sacrificial altar, wish,
@@ -118,6 +129,7 @@ bugs:
 - sometimes civic->government->mimic shows "none" despite the script having
   selected a mimic. this is a visual error, the chosen mimic is in effect
 - the script doesn't stop if the game is paused, it should
+- last 0* mad run with nephilim failed to trade for uranium at the end
 
 warning! use at your own risk. make a save first. the script is extremely
 fragile and will break on the slighest change in the game code and html design.

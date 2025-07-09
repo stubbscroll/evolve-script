@@ -1,0 +1,39 @@
+list of internal variables i can use for triggers in the script
+
+prefer to check techs and stuff in game variables instead of testing if a thing
+is undefined or something
+
+techs:
+evolve.global.tech['techname'], holds tech level
+
+===============================================================================
+normal runs - earth
+
+high_tech=3: industrialization researched, titanium unlocked
+-------------------------------------------------------------------------------
+normal runs - earth system
+-------------------------------------------------------------------------------
+normal runs - interstellar
+-------------------------------------------------------------------------------
+normal runs - andromeda
+-------------------------------------------------------------------------------
+normal runs - hell dimension
+-------------------------------------------------------------------------------
+normal runs - edenic realm
+
+palace=3: unlocks isle->tomb of the dead god (megaproject, 10 segments)
+palace=4: isle->tomb of the dead god completed
+palace=5: unlocks isle->energy conduit (megaproject, 25 segments)
+palace=6: unlocks isle->divinity infuser (megaproject, 25 segments)
+palace=7: isle->energy conduit and isle->divinity infuser both completed,
+          unlocks apotheosis (reset)
+-------------------------------------------------------------------------------
+truepath - outer space
+-------------------------------------------------------------------------------
+truepath - tau ceti
+-------------------------------------------------------------------------------
+lone survivor
+-------------------------------------------------------------------------------
+warlord
+
+evolve.global.race.warlord property exists if scenario is active (set to 1)
