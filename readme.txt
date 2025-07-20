@@ -10,16 +10,19 @@ script v1:
 script v2:
 - mad reset implemented, should work on all races
 - bioseed reset implemented
+- black hole implemented
 - vacuum collapse implemented
+- ascension implemented, desperately needs more testing
+- pillar under development
 - lone survivor implemented, works in antimatter, struggles with power
-  elsewhere, can finish with user intervention
-- warlord under development, implemented up to spire
+  elsewhere (can finish with some user intervention in these cases)
+- warlord implemented, more testing is desirable (the run is LONG)
 * i assume lumber+plywood is eliminated from all runs that go to interstellar
   or farther
 
 roadmap:
-- warlord, black hole (non-magic), ascension, pillar in that order (probably)
-- if i actually manage to finish the above: matrix, retirement, ai apocalypse
+- finish pillar, more testing
+- if i actually manage to finish the above: ai apocalypse, matrix, retirement
 
 usage:
 - do the protoplasm phase manually
@@ -51,7 +54,7 @@ system requirements:
     like sacrificial altar will not work
 
 progression requirements:
-- governors unlocked. task used: assign crates, mass ejector, mech constructor.
+- governors unlocked. tasks used: assign crates, mass ejector, mech constructor.
   mech constructor must be unlocked in order to do warlord and t5+
 - 25 steel from technophobe (script doesn't try to get steel)
 - some metaprogression (no idea how much). i haven't really tested on lower
@@ -76,6 +79,7 @@ stuff that's supported:
 - matter replicator, not using governor task. as a side effect, replicator
   power use is deducted from top left MW
 - unicorn shrine. always builds 25 knowledge shrines, then metal only
+- if we start the wrong script in a scenario, script redirects correctly
 
 stuff that's inefficient:
 - script doesn't save steel for the first factory (which is important) and can
@@ -85,14 +89,15 @@ stuff that's inefficient:
 - for now script distributes each crafter equally among resources (at least in
   mad-land and bioseed-land), but optimizing this is extremely low priority
 - the script insists on trying to be at positive power near the end of mad runs
-  (with all industry buildings turned on), when it reset faster by increasing
-  the knowledge cap (and let some rock quarriers and whatever be turned off).
-  it gets worse if all resources are present and we have powered sawmills,
-  quarries, cement plants, mines
+  (with all industry buildings turned on), when it can reset faster by
+  increasing the knowledge cap (and let some rock quarriers and whatever be
+  turned off). it gets worse if all resources are present and we have powered
+  sawmills, quarries, cement plants, mines
 - when playing synth or nano, the script sees wireless signal deficit and
   builds a bunch of transmitters that can't be powered on because of power
   deficit, and for some reason the script doesn't build mines to get copper for
-  coal powerplants. though the script gets out of this rut after ~250 days
+  coal powerplants. though the script gets out of this rut by itself after ~250
+  days
 - script never crafts manually or buys resources when challenge genes disabled
 - bioseed: script is stalled on researching space probes, doesn't trade for
   helium-3
@@ -102,11 +107,14 @@ stuff that's inefficient:
 - wendigo (soul eater trait): should treat hunters like farmers, depopulate
   them unless food deficit at the start of a run. the relevant part of the code
   is a terrible mess, so it's low priority
+- hell fortress and attractor beacons is probably very inefficient. but it
+  works, doesn't seem to softlock, and can recover from overruns (which happen)
 
 stuff that doesn't work:
 - some race-specific stuff not yet implemented (sacrificial altar, wish,
   psychic powers)
 - some universe-specific stuff (authority, alchemy) not yet implemented
+  (warlord handles authority)
 - truepath not tested. most stuff might work up to long-range probes
 - probably some corner cases that can make the script trip up, like
   high population+horseshoes
@@ -130,6 +138,10 @@ bugs:
   selected a mimic. this is a visual error, the chosen mimic is in effect
 - the script doesn't stop if the game is paused, it should
 - last 0* mad run with nephilim failed to trade for uranium at the end
+- in warlord, sometimes spire supply tab doesn't display properly after
+  building a transport. this prevents the script from sending supplies
+- MAD: set trade routes to sell uranium before researching mutual destruction,
+  which is the opposite of desired behaviour
 
 warning! use at your own risk. make a save first. the script is extremely
 fragile and will break on the slighest change in the game code and html design.

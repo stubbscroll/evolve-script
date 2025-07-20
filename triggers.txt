@@ -6,21 +6,88 @@ is undefined or something
 techs:
 evolve.global.tech['techname'], holds tech level
 
+gotchas:
+the artificial trait (synthetic) is named 'artifical' internally
+eden->survey meadows is named 'eden-survery_meadows' internally
 ===============================================================================
 normal runs - earth
 
-high_tech=3: industrialization researched, titanium unlocked
+high_tech=3: industrialization (factories and titanium unlocked)
 -------------------------------------------------------------------------------
 normal runs - earth system
+
+asteroid=3: can build iron ships (and space miners i guess)
 -------------------------------------------------------------------------------
 normal runs - interstellar
+
+infernite=4: calibrated sensors (increased infernite production from surveyors)
+blackhole=3: stellar engine researched
+blackhole=4: stellar engine completed
+proxima=3, dyson undefined: can build dyson net
+dyson net completed: couldn't find a trigger except from building count==100
+dyson=1: can build bolognium dyson sphere
+dyson=2: can build orichalcum dyson sphere
+dyson=3: can build elysanite dyson sphere
+stargate=1: can build jump ship
+stargate=2: jump ship built, can do wormhole mission
+stargate=3: wormhole mission done, can build stargate
+stargate=4: stargate finished
 -------------------------------------------------------------------------------
 normal runs - andromeda
+
+gateway=1: gateway mission available
+gateway=2: gateway mission done, can build starbase
+gateway=3: we have built starbase, bolognium and scout ships unlocked
+mars=6: hydroponic bays researched
+xeno=1: first scout ship destroyed
+housing_reduction=4: bolognium alloy beams researched
+infernite=5: shield generator researched
+xeno=2: gorddon mission available
+xeno=3: gorddon mission done
+xeno=4: embassy available (xeno culture researched)
+xeno=5: embassy built
+xeno=8: alien gift researched, can build consulate (system 4)
+andromeda=4: alien2 assault mission available
+conflict=1: alien2 assault done
+nanoweave=1: nanoweave researched
+marines=2: nanoweave hammocks researched
+armor=4: nanoweave vest researched
+steel_container=8: nanoweave container researched
+chthonian=1: can assault chthonian
+chthonian=2: assault chthonian done
+mass=2: orichalcum mass driver researched
+ascension=1: incorporeal existence researched
+ascension=2: ascension researched, sirius mission (interstellar) available
+ascension=3: sirius mission done, sirius b analysis available
+ascension=4: sirius b analysis done, can build space elevator
+ascension=5: space elevator built, can build gravity dome
+ascension=6: gravity dome built, can build ascension machine and thermal collectors
 -------------------------------------------------------------------------------
 normal runs - hell dimension
+
+hell_pit=1: scout the pit mission available
+hell_pit=2: scout the pit done, can secure pit
+hell_pit=3: pit secured
+hell_ruins=1: survey ruins available
+hell_ruins=2: survey ruins done
+hell_vault=1: can build vault part 1 (2-part building)
+hell_ruins=3: vault finished
+scarletite=1: scarletite researched
+high_tech=18: can do gate investigation
+hell_gate=1: gate investigation done
+hell_gate=2: gate key researched, can build west and east walls
+hell_gate=3: gate turrets researched
+waygate=1: can build waygate
+waygate=2: waygate built
+waygate=3: demon lord defeated
 -------------------------------------------------------------------------------
 normal runs - edenic realm
 
+elysium=11: elerium containment researched
+isle=1: fire support base completed, isle fortress visible
+isle=2: isle fortress destroyed, piers avaiable for construction
+palace=1: scout palace unlocked
+palace=2: palace scouted
 palace=3: unlocks isle->tomb of the dead god (megaproject, 10 segments)
 palace=4: isle->tomb of the dead god completed
 palace=5: unlocks isle->energy conduit (megaproject, 25 segments)
@@ -31,9 +98,20 @@ palace=7: isle->energy conduit and isle->divinity infuser both completed,
 truepath - outer space
 -------------------------------------------------------------------------------
 truepath - tau ceti
+
+disease=1: infectious disease lab researched and available for construction
+tau_red=3: weasels discovered
+tau_red=5: contact with womlings established
+tau_red=6: womling morale building researched
+tau_red=7: womling lab researched
+evolve.global.race.womling_friend=1: contact
+evolve.global.race.womling_god=1: introduce
+evolve.global.race.womling_lord=1: subjugate
 -------------------------------------------------------------------------------
 lone survivor
+
+evolve.global.race.lone_survivor=1 if scenario is active, undefined otherwise
 -------------------------------------------------------------------------------
 warlord
 
-evolve.global.race.warlord property exists if scenario is active (set to 1)
+evolve.global.race.warlord=1 if scenario is active, undefined otherwise
