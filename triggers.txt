@@ -9,10 +9,17 @@ evolve.global.tech['techname'], holds tech level
 gotchas:
 the artificial trait (synthetic) is named 'artifical' internally
 eden->survey meadows is named 'eden-survery_meadows' internally
+the anti-grav bunk (truepath) tech is called 'anitgrav_bunk' internally
 ===============================================================================
 normal runs - earth
 
+smelting=2: crucible steel, smelters can produce steel
 high_tech=3: industrialization (factories and titanium unlocked)
+titanium=1: hunter process researched
+uranium=1: uranium researched
+uranium=2: uranium storage researched
+gambling=1: casino researched
+monument=2: tourism researched
 -------------------------------------------------------------------------------
 normal runs - earth system
 
@@ -95,18 +102,77 @@ palace=6: unlocks isle->divinity infuser (megaproject, 25 segments)
 palace=7: isle->energy conduit and isle->divinity infuser both completed,
           unlocks apotheosis (reset)
 -------------------------------------------------------------------------------
+truepath - mad
+
+evolve.global.race.truepath=1 if truepath is active, undefined otherwise
+-------------------------------------------------------------------------------
 truepath - outer space
+
+outer=1: long range probes researched, titan and enceladus missions unlocked
+titan=1: titan mission done
+enceladus=1: enceladus mission done
+enceladus=2: water freighters researched
+stanene=1: stanene researched
+titan_power=1: hydrogen plants researched
+graphene=1: graphene researched, graphene plants available
+syard_weapon=4: ship plasma beams researched
+quantium=1: quantium researched
+syard_sensor=4: ship quantum scanner researched
+outer=2: triton mission researched and available
+triton=1: triton mission done
+syard_weapon=5: ship phasers researched
+syard_power=4: ship fusion power researched
+marines=2:anti-grav bunks researched
+syard_weapon=6: ship disruptors researched
+syard_engine=5: vacuum drive researched
+syard_power=5: ship elerium power researched
+outer=5: can build mass relay
+outer=6: mass relay built (can still be charging, need to check that separately)
+outer=7: kuiper and eris missions available
+kuiper=1: kuiper mission done
+kuiper=2: elerium mine researched
+eris=1: eris mission done
+titan=9: ai supercore researched
+titan_ai_core=1: ai supercore built, building space-ai_core2 takes over
+titan_ai_core=2: ai optimizations researched
+eris=2: eris is scanned
+eris=3: drone warfare researched
+eris=4: ai drone tanks researched
+dig_control=1: 100%'d eris digsite, new techs unlocked
 -------------------------------------------------------------------------------
 truepath - tau ceti
 
+tauceti=1: interstellar drive researched, explorer ship available
+tauceti=2: survey new earth and new mars available
+tau_home=1: tau ceti home mission done, can dismantle ship
+tau_home=2: explorer ship dismantled, can build stuff in materials mode
+tau_home=3: alien outpost excavated (starts as disabled)
+tau_red=1: survey new mars done
 disease=1: infectious disease lab researched and available for construction
 tau_red=3: weasels discovered
 tau_red=5: contact with womlings established
 tau_red=6: womling morale building researched
 tau_red=7: womling lab researched
+womling_pop=1: each womling farm feeds 16 womlings, up from 12
+womling_pop=2: each womling village houses 6 womlings, up from 5
 evolve.global.race.womling_friend=1: contact
 evolve.global.race.womling_god=1: introduce
 evolve.global.race.womling_lord=1: subjugate
+tauceti=5: gas giant contest available, asteroid belt mission available
+tau_roid=1: asteroid belt mission done
+tau_gas=2: gas naming contest done, can build refueling stations
+tau_whale=1: space whaling researched, we gradually suffer from plague
+-------------------------------------------------------------------------------
+truepath - tau ceti - isolation
+
+isolation=1: isolation protocol is enacted
+tau_gas2=1: gas contest 2 unlocked
+tau_gas2=2: choose name
+tau_gas2=3: name chosen, can survey alien space station
+tau_gas2=4: alien space station surveyed, can build alien space station
+tau_gas2=5: alien space station built
+tau_gas2=6: alien space station research done
+tau_gas2=8: can build matrioshka brain and ignition device
 -------------------------------------------------------------------------------
 lone survivor
 
@@ -115,3 +181,8 @@ evolve.global.race.lone_survivor=1 if scenario is active, undefined otherwise
 warlord
 
 evolve.global.race.warlord=1 if scenario is active, undefined otherwise
+-------------------------------------------------------------------------------
+orbital decay:
+
+terraforming=1: researched terraforming, can build terraformer
+terraforming=2: terraformer finished

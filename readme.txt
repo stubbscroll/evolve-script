@@ -1,5 +1,5 @@
 mad.js        script v1, does only mad reset
-evolve.js     script v2, currently mad, bioseed, vacuum collapse, lone survivor
+evolve.js     script v2, t1-t4 resets, pillar, lone survivor, warlord, tp3-tp4, tp od kamikaze
 
 script that plays evolve
 https://pmotschmann.github.io/Evolve/
@@ -8,21 +8,44 @@ script v1:
 - mad reset
 
 script v2:
+* all tests done with ~116k plasmids, 70k antiplasmids, 200 supercoiled
+  plasmids, 10k phage, 71 dark energy, 145 harmony crystals, 28 ai cores,
+  almost all perks, all crispr upgrades, some servants and skilled servants
+  (from overlord tour)
 - mad reset implemented, should work on all races
 - bioseed reset implemented
 - black hole implemented
 - vacuum collapse implemented
-- ascension implemented, desperately needs more testing
-- pillar under development
+- ascension implemented
+- pillar implemented, tested with various races including 4* sludge in heavy
+  gravity, 4* digital ascension (synth, imitate wyvern, +4% power star sign, in
+  antimatter)
+- ai apocalypse implemented, tested with djinn in heavy gravity
+- matrix and retirement implemented, tested with hybrid custom in heavy gravity.
+  need testing in micro
 - lone survivor implemented, works in antimatter, struggles with power
   elsewhere (can finish with some user intervention in these cases)
 - warlord implemented, more testing is desirable (the run is LONG)
+- truepath orbital decay on kamikaze planet implemented
 * i assume lumber+plywood is eliminated from all runs that go to interstellar
-  or farther
+  or farther, as well as assuming that matter replicator is unlocked
 
 roadmap:
-- finish pillar, more testing
-- if i actually manage to finish the above: ai apocalypse, matrix, retirement
+- more testing with different races
+- more testing on longer runs
+
+not planned:
+- in short, only farming runs and setup runs are supported
+- specific challenges/scenarios/achievements/feats that we never want to farm
+  (at most we do them once in each universe) like better dead than red, banana
+  republic, dreaded, fasting, cataclysm. em field happens to be possible (less
+  painfun in antimatter because of power bonus)
+- also no plans of supporting demonic infusion and apotheosis. warlord (which is
+  supported) sort of covers farming of supercoiled plasmids, artifacts and
+  blood stones
+- truepath mad and bioseed, but we can start ai apocalypse and reset early
+- i never ended up making any fancy and general priority and weighting system
+  for building stuff with conflicting resources
 
 usage:
 - do the protoplasm phase manually
@@ -31,7 +54,11 @@ usage:
 - press f12 to open javascript console (firefox, chrome)
 - copy/paste the contents of evolve.js to the console
 - comment out the desired reset type, press enter
-- wait until the script reaches the reset point, then perform the reset manually
+- wait until the script reaches the reset point, then press reset manually
+- in retirement and orbital decay, the game refreshes at isolation/moonfall.
+  when that happens, re-paste the script
+- optionally, manually remove/add genes in arpa->genetics (script doesn't do
+  that)
 - playing manually while the script is running is not recommended. holding the
   multiplier keys can multiply some of the script's actions and do unintended
   things
@@ -59,6 +86,8 @@ progression requirements:
 - 25 steel from technophobe (script doesn't try to get steel)
 - some metaprogression (no idea how much). i haven't really tested on lower
   progression
+- matter replicator required in ascension/pillar/truepath runs, and probably
+  also black hole runs
 
 supports:
 - servants and skilled servants (highly recommended to have at least a few)
@@ -70,6 +99,7 @@ stuff that's supported:
 - slaves (balorg)
 - rituals (magic universe)
 - ocular powers (eye-spector)
+- sacrificial altar
 - tax-morale balance, not using governor task
 - synth and nano, but it's a rough run with power struggles and apartments
   often losing power causing homelessness, even with late-game progression
@@ -84,8 +114,9 @@ stuff that's supported:
 stuff that's inefficient:
 - script doesn't save steel for the first factory (which is important) and can
   buy a bunch of steel horseshoes first
-- script buys gps satellites when we'd rather have spaceports, factories,
-  iridium mines, mining outposts (i guess we do want a few gps satellites)
+- script buys gps satellites when we'd rather use titanium on spaceports,
+  factories, iridium mines, mining outposts (i guess we do want a few gps
+  satellites though)
 - for now script distributes each crafter equally among resources (at least in
   mad-land and bioseed-land), but optimizing this is extremely low priority
 - the script insists on trying to be at positive power near the end of mad runs
@@ -102,26 +133,31 @@ stuff that's inefficient:
 - bioseed: script is stalled on researching space probes, doesn't trade for
   helium-3
 - bioseed: end of bioseed is slow, should build some supercolliders to reach
-  desired techs faster (it goes for quantum computing). should also change to
+  desired techs faster (it aims for quantum computing). should also change to
   corpocracy (factory buff) for the last stretch
 - wendigo (soul eater trait): should treat hunters like farmers, depopulate
   them unless food deficit at the start of a run. the relevant part of the code
   is a terrible mess, so it's low priority
 - hell fortress and attractor beacons is probably very inefficient. but it
   works, doesn't seem to softlock, and can recover from overruns (which happen)
+- truepath: script builds up to extreme degrees before researching long range
+  probes. might be good for tp4/kamikaze od runs, not so good for quick
+  imitation runs
 
 stuff that doesn't work:
-- some race-specific stuff not yet implemented (sacrificial altar, wish,
-  psychic powers)
+- some race-specific stuff not yet implemented (wish, psychic powers)
 - some universe-specific stuff (authority, alchemy) not yet implemented
   (warlord handles authority)
-- truepath not tested. most stuff might work up to long-range probes
-- probably some corner cases that can make the script trip up, like
-  high population+horseshoes
+- truepath not tested. most stuff might work up to long-range probes. support
+  for ai apocalypse, matrix, retirement is planned though
 - events in general
   - thermite gets assigned crafters like a normal resource. can cause problems
     early in the run with low aluminium production
-- script struggles with blubber (oil production)
+- script struggles with blubber (oil production). should buy more oil via
+  trade routes until oil extractors
+- increased andromeda piracy because of chicken trait is not accounted for
+- script doesn't add or remove traits in arpa->genetics. this won't be
+  automated either. it's recommended that the player does that in long runs
 
 bugs:
 - in market and storage tabs there's sometimes garbage on the bottom
@@ -137,18 +173,20 @@ bugs:
 - sometimes civic->government->mimic shows "none" despite the script having
   selected a mimic. this is a visual error, the chosen mimic is in effect
 - the script doesn't stop if the game is paused, it should
-- last 0* mad run with nephilim failed to trade for uranium at the end
 - in warlord, sometimes spire supply tab doesn't display properly after
   building a transport. this prevents the script from sending supplies
 - MAD: set trade routes to sell uranium before researching mutual destruction,
   which is the opposite of desired behaviour
+- probably some corner cases that can make the script trip up, like
+  high population+horseshoes
 
 warning! use at your own risk. make a save first. the script is extremely
 fragile and will break on the slighest change in the game code and html design.
 i assume no responsibility if the script breaks and clicks out of bounds and
 spends all your prestige resources on stupid stuff in arpa->genetics or buys
 dark energy bomb or buys bad blood infusions or does a hard reset. for whatever
-it's worth, i'm using the script on my own main save, but i make backups often
+it's worth, i've been using the script on my main save for 3-4 weeks now, but i
+make backups often
 
 just use volch's script instead
 https://github.com/Vollch/Evolve-Automation
