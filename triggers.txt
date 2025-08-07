@@ -20,17 +20,27 @@ uranium=1: uranium researched
 uranium=2: uranium storage researched
 gambling=1: casino researched
 monument=2: tourism researched
+high_tech=6: arpa researched, can build supercolliders
+high_tech=7: rocketry researched, can build launch facility
 -------------------------------------------------------------------------------
 normal runs - earth system
 
+luna=2: nav beacon available
+space=3: moon base available
+space_explore=2: space rovers researched
+space_explore=3: space probes researched, mars mission available
+space=4: mars mission done
 asteroid=3: can build iron ships (and space miners i guess)
 -------------------------------------------------------------------------------
 normal runs - interstellar
 
+luna=3: subspace beacons researched (nav beacons give mars support)
 infernite=4: calibrated sensors (increased infernite production from surveyors)
 blackhole=3: stellar engine researched
 blackhole=4: stellar engine completed
-proxima=3, dyson undefined: can build dyson net
+blackhole=5: mass ejectors researched
+evolve.global.settings.showEjector: true if we built at least 1 mass ejector
+proxima=3: dyson undefined: can build dyson net
 dyson net completed: couldn't find a trigger except from building count==100
 dyson=1: can build bolognium dyson sphere
 dyson=2: can build orichalcum dyson sphere
@@ -39,6 +49,8 @@ stargate=1: can build jump ship
 stargate=2: jump ship built, can do wormhole mission
 stargate=3: wormhole mission done, can build stargate
 stargate=4: stargate finished
+portal=5: combat droids researched
+portal=6: repair droids researched
 -------------------------------------------------------------------------------
 normal runs - andromeda
 
@@ -122,7 +134,7 @@ outer=2: triton mission researched and available
 triton=1: triton mission done
 syard_weapon=5: ship phasers researched
 syard_power=4: ship fusion power researched
-marines=2:anti-grav bunks researched
+marines=2: anti-grav bunks researched
 syard_weapon=6: ship disruptors researched
 syard_engine=5: vacuum drive researched
 syard_power=5: ship elerium power researched
@@ -148,7 +160,6 @@ tau_home=1: tau ceti home mission done, can dismantle ship
 tau_home=2: explorer ship dismantled, can build stuff in materials mode
 tau_home=3: alien outpost excavated (starts as disabled)
 tau_red=1: survey new mars done
-disease=1: infectious disease lab researched and available for construction
 tau_red=3: weasels discovered
 tau_red=5: contact with womlings established
 tau_red=6: womling morale building researched
@@ -162,6 +173,7 @@ tauceti=5: gas giant contest available, asteroid belt mission available
 tau_roid=1: asteroid belt mission done
 tau_gas=2: gas naming contest done, can build refueling stations
 tau_whale=1: space whaling researched, we gradually suffer from plague
+disease=1: infectious disease lab researched and available for construction
 -------------------------------------------------------------------------------
 truepath - tau ceti - isolation
 

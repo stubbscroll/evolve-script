@@ -31,21 +31,32 @@ script v2:
   or farther, as well as assuming that matter replicator is unlocked
 
 roadmap:
-- more testing with different races
-- more testing on longer runs
+- add more techs to the manual list at the start of truepath: magic
+  stuff, evil stuff, carnivore stuff
+- currently testing:
+  - avian-sludge ai apocalypse in heavy gravity, inherit mimic (heat) and slaver
+  - heat-ultra sludge 4* pillar in heavy gravity, inherit djinn and slaver
+  - mantis retirement in heavy gravity, inherit mimic (heat) and slaver. test
+    high population in ai apocalypse (troop landers)
+- more testing:
+  * the aim is to make the script more robust and avoid softlocking in unusual
+    situations. priority on being able to finish a run rather than efficiency
+  - try with different races and traits
+  - longer runs need more testing
+- more tweaks to handle some likely situations
+  - many skilled servants + low production => handle deficit from crafters
+    (brick => cement, wrought iron => iron, sheet metal => aluminium,
+    mythril => iridium, aerogel => infernite), currently a small problem in
+    sludge truepath (haven't tested super sludge yet). super sludge 4* in
+    falsepath is fine (so far). ideally i need a better routine for distributing
+    crafters (regular and servants) that cares about deficiencies
 
 not planned:
-- in short, only farming runs and setup runs are supported
-- specific challenges/scenarios/achievements/feats that we never want to farm
-  (at most we do them once in each universe) like better dead than red, banana
-  republic, dreaded, fasting, cataclysm. em field happens to be possible (less
-  painfun in antimatter because of power bonus)
-- also no plans of supporting demonic infusion and apotheosis. warlord (which is
-  supported) sort of covers farming of supercoiled plasmids, artifacts and
-  blood stones
-- truepath mad and bioseed, but we can start ai apocalypse and reset early
-- i never ended up making any fancy and general priority and weighting system
-  for building stuff with conflicting resources
+- more challenge runs, more resets. tp1-2 can be done by starting ai apocalypse
+  and resetting early. em field happens to be possible
+- my goal was to be able to farm every resource, and my script supports that
+  now. warlord covers supercoiled plasmids, bloodstones, artifacts, changing of
+  hybrid custom so no need to implement demonic infusion and apotheosis
 
 usage:
 - do the protoplasm phase manually
@@ -55,13 +66,14 @@ usage:
 - copy/paste the contents of evolve.js to the console
 - comment out the desired reset type, press enter
 - wait until the script reaches the reset point, then press reset manually
-- in retirement and orbital decay, the game refreshes at isolation/moonfall.
+
+some usage notes:
+- in tp4 retirement and orbital decay, the game refreshes at isolation/moonfall.
   when that happens, re-paste the script
-- optionally, manually remove/add genes in arpa->genetics (script doesn't do
-  that)
+- we can manually remove/add genes in arpa->genetics (script doesn't do that)
 - playing manually while the script is running is not recommended. holding the
   multiplier keys can multiply some of the script's actions and do unintended
-  things
+  things. it should be fine to build the occasional building though
 - in warlord, don't enable/disable mech bays manually! the script uses
   disabling to store state during the spire climb. disabling mech bays will
   make the script enter a mode where it focuses on buying purifiers/ports/
@@ -143,27 +155,26 @@ stuff that's inefficient:
 - truepath: script builds up to extreme degrees before researching long range
   probes. might be good for tp4/kamikaze od runs, not so good for quick
   imitation runs
+- script struggles with blubber (oil production). script eventually gets to
+  genetics (even with narwhalus on ashland in truepath without trading for oil),
+  but it's recommended to gene-remove blubber as soon as possible
 
 stuff that doesn't work:
 - some race-specific stuff not yet implemented (wish, psychic powers)
-- some universe-specific stuff (authority, alchemy) not yet implemented
-  (warlord handles authority)
-- truepath not tested. most stuff might work up to long-range probes. support
-  for ai apocalypse, matrix, retirement is planned though
+- some universe-specific stuff (authority, alchemy) not yet implemented,
+  except in warlord where authority is handled
 - events in general
   - thermite gets assigned crafters like a normal resource. can cause problems
     early in the run with low aluminium production
-- script struggles with blubber (oil production). should buy more oil via
-  trade routes until oil extractors
-- increased andromeda piracy because of chicken trait is not accounted for
+- increased andromeda piracy and syndicate influence because of chicken trait is
+  not accounted for
 - script doesn't add or remove traits in arpa->genetics. this won't be
   automated either. it's recommended that the player does that in long runs
+- script might not work in interstellar and beyond without matter replicator, or
+  if we haven't removed plywood
 
 bugs:
 - in market and storage tabs there's sometimes garbage on the bottom
-- script overbuilds on mars which isn't supposed to happen
-- trading in MAD: sometimes sticks to titanium routes for too long and doesn't
-  buy uranium
 - sometimes normal servants arrive, but skilled servants don't. i don't know if
   the script is at fault. can be solved by refreshing the webpage and
   re-pasting the script
@@ -175,10 +186,6 @@ bugs:
 - the script doesn't stop if the game is paused, it should
 - in warlord, sometimes spire supply tab doesn't display properly after
   building a transport. this prevents the script from sending supplies
-- MAD: set trade routes to sell uranium before researching mutual destruction,
-  which is the opposite of desired behaviour
-- probably some corner cases that can make the script trip up, like
-  high population+horseshoes
 
 warning! use at your own risk. make a save first. the script is extremely
 fragile and will break on the slighest change in the game code and html design.
