@@ -8,48 +8,53 @@ script v1:
 - mad reset
 
 script v2:
-* all tests done with ~116k plasmids, 70k antiplasmids, 200 supercoiled
+* all tests done with at least ~116k plasmids, 70k antiplasmids, 200 supercoiled
   plasmids, 10k phage, 71 dark energy, 145 harmony crystals, 28 ai cores,
   almost all perks, all crispr upgrades, some servants and skilled servants
   (from overlord tour)
 - mad reset implemented, should work on all races
-- bioseed reset implemented
+- bioseed reset implemented. it's the only run where the script queues stuff,
+  because dealing with the space dock modal sucks
 - black hole implemented
 - vacuum collapse implemented
 - ascension implemented
-- pillar implemented, tested with various races including 4* sludge in heavy
-  gravity, 4* digital ascension (synth, imitate wyvern, +4% power star sign, in
-  antimatter)
-- ai apocalypse implemented, tested with djinn in heavy gravity
+- pillar implemented, tested with various races including 4* ultra sludge in
+  heavy gravity and 4* digital ascension (synth, imitate wyvern, +4% power star
+  sign, in antimatter)
+- demonic infusion, minimal effort implementation. it reuses routines from
+  warlord and plays inefficiently. full run tested with eye-spector 4*
+- ai apocalypse implemented, tested with various races including sludge in heavy
+  gravity
 - matrix and retirement implemented, tested with hybrid custom in heavy gravity.
   need testing in micro
 - lone survivor implemented, works in antimatter, struggles with power
   elsewhere (can finish with some user intervention in these cases)
 - warlord implemented, more testing is desirable (the run is LONG)
-- truepath orbital decay on kamikaze planet implemented
+- truepath orbital decay on kamikaze planet implemented, more testing is
+  desirable (the run is extremely long)
 * i assume lumber+plywood is eliminated from all runs that go to interstellar
   or farther, as well as assuming that matter replicator is unlocked
 
 roadmap:
 - add more techs to the manual list at the start of truepath: magic
-  stuff, evil stuff, carnivore stuff
+  stuff (alchemy), specific race stuff i've forgotten. test that pillar with
+  a plant race depopulates miners at the correct time. balorg support outside
+  of mad
 - currently testing:
-  - avian-sludge ai apocalypse in heavy gravity, inherit mimic (heat) and slaver
-  - heat-ultra sludge 4* pillar in heavy gravity, inherit djinn and slaver
-  - mantis retirement in heavy gravity, inherit mimic (heat) and slaver. test
-    high population in ai apocalypse (troop landers)
+  - heat-ultra sludge 4* demonic infusion in heavy gravity, inherit djinn and
+    slaver
 - more testing:
   * the aim is to make the script more robust and avoid softlocking in unusual
     situations. priority on being able to finish a run rather than efficiency
   - try with different races and traits
-  - longer runs need more testing
+  - longer runs need more testing (especially warlord)
 - more tweaks to handle some likely situations
   - many skilled servants + low production => handle deficit from crafters
     (brick => cement, wrought iron => iron, sheet metal => aluminium,
     mythril => iridium, aerogel => infernite), currently a small problem in
     sludge truepath (haven't tested super sludge yet). super sludge 4* in
     falsepath is fine (so far). ideally i need a better routine for distributing
-    crafters (regular and servants) that cares about deficiencies
+    crafters (regular and servants) that cares about deficits
 
 not planned:
 - more challenge runs, more resets. tp1-2 can be done by starting ai apocalypse
@@ -57,6 +62,9 @@ not planned:
 - my goal was to be able to farm every resource, and my script supports that
   now. warlord covers supercoiled plasmids, bloodstones, artifacts, changing of
   hybrid custom so no need to implement demonic infusion and apotheosis
+- if i get bored the next time i do demonic infusion or apotheosis i might
+  implement them. but i want an easy way to find the number of tower segments
+  first
 
 usage:
 - do the protoplasm phase manually
@@ -166,26 +174,23 @@ stuff that doesn't work:
 - events in general
   - thermite gets assigned crafters like a normal resource. can cause problems
     early in the run with low aluminium production
-- increased andromeda piracy and syndicate influence because of chicken trait is
-  not accounted for
-- script doesn't add or remove traits in arpa->genetics. this won't be
-  automated either. it's recommended that the player does that in long runs
+- script doesn't add or remove traits in arpa->genetics. it's recommended that
+  the player does that in long runs. i might add gene-editing of stuff that
+  should always be good, like removing tormented, adding solitary in tp etc
 - script might not work in interstellar and beyond without matter replicator, or
   if we haven't removed plywood
 
 bugs:
-- in market and storage tabs there's sometimes garbage on the bottom
-- sometimes normal servants arrive, but skilled servants don't. i don't know if
-  the script is at fault. can be solved by refreshing the webpage and
-  re-pasting the script
-- script is softlocked when trying to buy freight yard and there are no
-  crafters on wrought iron. happens very often when skilled servants don't
-  arrive. should fix this, ideally script should work without skilled servants
+- html corruption bugs:
+  - in market and storage tabs there's sometimes garbage on the bottom
+  - sometimes normal servants arrive, but skilled servants don't. i don't know
+    if the script is at fault. can be solved by refreshing the webpage and
+    re-pasting the script
+  - in warlord, sometimes spire supply tab doesn't display properly after
+    building a transport. this prevents the script from sending supplies
 - sometimes civic->government->mimic shows "none" despite the script having
   selected a mimic. this is a visual error, the chosen mimic is in effect
 - the script doesn't stop if the game is paused, it should
-- in warlord, sometimes spire supply tab doesn't display properly after
-  building a transport. this prevents the script from sending supplies
 
 warning! use at your own risk. make a save first. the script is extremely
 fragile and will break on the slighest change in the game code and html design.

@@ -11,8 +11,19 @@ the artificial trait (synthetic) is named 'artifical' internally
 eden->survey meadows is named 'eden-survery_meadows' internally
 the anti-grav bunk (truepath) tech is called 'anitgrav_bunk' internally
 ===============================================================================
+race-specific stuff
+
+psychic=4: can channel psychic energy for permanent buff
+===============================================================================
+universe-specific stuff
+
+magic=3: rituals unlocked
+magic=4: crafting rituals unlocked
+===============================================================================
 normal runs - earth
 
+container=1: crates researched
+steel_container=1: containers researched
 smelting=2: crucible steel, smelters can produce steel
 high_tech=3: industrialization (factories and titanium unlocked)
 titanium=1: hunter process researched
@@ -31,6 +42,9 @@ space_explore=2: space rovers researched
 space_explore=3: space probes researched, mars mission available
 space=4: mars mission done
 asteroid=3: can build iron ships (and space miners i guess)
+high_tech=10: artificial intelligence researched (prerequisite for psychic
+              channeling with eldritch)
+high_tech=11: quantum computing
 -------------------------------------------------------------------------------
 normal runs - interstellar
 
@@ -66,8 +80,10 @@ xeno=3: gorddon mission done
 xeno=4: embassy available (xeno culture researched)
 xeno=5: embassy built
 xeno=8: alien gift researched, can build consulate (system 4)
+piracy: piracy level (rising)
 andromeda=4: alien2 assault mission available
 conflict=1: alien2 assault done
+science=18: alien database researched
 nanoweave=1: nanoweave researched
 marines=2: nanoweave hammocks researched
 armor=4: nanoweave vest researched
@@ -96,6 +112,9 @@ high_tech=18: can do gate investigation
 hell_gate=1: gate investigation done
 hell_gate=2: gate key researched, can build west and east walls
 hell_gate=3: gate turrets researched
+hell_gun=2: advanced gun emplacements researched
+hell_lake=1: both towers built, scout lake mission available
+hell_lake=2: scout lake mission done
 waygate=1: can build waygate
 waygate=2: waygate built
 waygate=3: demon lord defeated
