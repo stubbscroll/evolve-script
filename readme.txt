@@ -1,14 +1,14 @@
 mad.js        script v1, does only mad reset
-evolve.js     script v2, t1-t4 resets, pillar, lone survivor, warlord, tp3-tp4, tp od kamikaze
+evolve.js     script v2, t1-t5 resets, pillar, lone survivor, warlord, tp3-tp4, tp od kamikaze
 
-script that plays evolve
+script that plays evolve (link to game):
 https://pmotschmann.github.io/Evolve/
 
 script v1:
 - mad reset
 
 script v2:
-* all tests done with at least ~116k plasmids, 70k antiplasmids, 200 supercoiled
+* all tests done with at least 116k plasmids, 70k antiplasmids, 200 supercoiled
   plasmids, 10k phage, 71 dark energy, 145 harmony crystals, 28 ai cores,
   almost all perks, all crispr upgrades, some servants and skilled servants
   (from overlord tour)
@@ -22,7 +22,7 @@ script v2:
   heavy gravity and 4* digital ascension (synth, imitate wyvern, +4% power star
   sign, in antimatter)
 - demonic infusion, minimal effort implementation. it reuses routines from
-  warlord and plays inefficiently. full run tested with eye-spector 4*
+  warlord and plays inefficiently. full run tested with ultra sludge 4*
 - ai apocalypse implemented, tested with various races including sludge in heavy
   gravity
 - matrix and retirement implemented, tested with hybrid custom in heavy gravity.
@@ -36,16 +36,22 @@ script v2:
   or farther, as well as assuming that matter replicator is unlocked
 
 roadmap:
-- add more techs to the manual list at the start of truepath: magic
-  stuff (alchemy), specific race stuff i've forgotten. test that pillar with
-  a plant race depopulates miners at the correct time. balorg support outside
-  of mad
+- implement ui for selecting run type, so we don't have to mess with comments
+- then make tampermonkey/greasemonkey support so we don't have to copy-paste the
+  entire thing
+- check if i need to add more techs to the manual list at the start of truepath
+  (might have forgotten some race specific stuff)
+- balorg support in truepath (gene-remove terrifying when playing outside of
+  truepath)
+- in magic, use alchemy to speed up bottlenecks
+- i've been testing truepath with leo star sign (+4% power bonus). test again
+  without the bonus and see if we can still build ships and have enough power
 - currently testing:
-  - heat-ultra sludge 4* demonic infusion in heavy gravity, inherit djinn and
-    slaver
 - more testing:
-  * the aim is to make the script more robust and avoid softlocking in unusual
+  * the aim is to make the script more robust and avoid softlocking in uncommon
     situations. priority on being able to finish a run rather than efficiency
+  - quick demonic infusion in magic
+  - bloodstones farming in micro
   - try with different races and traits
   - longer runs need more testing (especially warlord)
 - more tweaks to handle some likely situations
@@ -113,13 +119,14 @@ supports:
 - servants and skilled servants (highly recommended to have at least a few)
 
 stuff that's supported:
-- balorg, uses combat to get titanium
+- balorg, uses combat to get titanium (not implemented in truepath)
 - meditation chamber (capybara)
 - smokehouse (carnivore races)
 - slaves (balorg)
 - rituals (magic universe)
 - ocular powers (eye-spector)
-- sacrificial altar
+- sacrificial altar (mantis)
+- authority (evil universe) outside of truepath (tested on demonic infusion)
 - tax-morale balance, not using governor task
 - synth and nano, but it's a rough run with power struggles and apartments
   often losing power causing homelessness, even with late-game progression

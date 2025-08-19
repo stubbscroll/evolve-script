@@ -48,6 +48,7 @@ high_tech=11: quantum computing
 -------------------------------------------------------------------------------
 normal runs - interstellar
 
+science=11: world collider built
 luna=3: subspace beacons researched (nav beacons give mars support)
 infernite=4: calibrated sensors (increased infernite production from surveyors)
 blackhole=3: stellar engine researched
