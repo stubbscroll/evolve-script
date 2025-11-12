@@ -13,7 +13,8 @@ the anti-grav bunk (truepath) tech is called 'anitgrav_bunk' internally
 ===============================================================================
 race-specific stuff
 
-psychic=4: can channel psychic energy for permanent buff
+psychic=4: can channel psychic energy for permanent buff (requires artificial
+           intelligence tech, in bioseed-land)
 ===============================================================================
 universe-specific stuff
 
@@ -25,6 +26,7 @@ normal runs - earth
 container=1: crates researched
 steel_container=1: containers researched
 smelting=2: crucible steel, smelters can produce steel
+high_tech=2: electricity
 high_tech=3: industrialization (factories and titanium unlocked)
 titanium=1: hunter process researched
 uranium=1: uranium researched
@@ -101,6 +103,9 @@ ascension=6: gravity dome built, can build ascension machine and thermal collect
 -------------------------------------------------------------------------------
 normal runs - hell dimension
 
+portal=1: hell unlocked
+portal=2: hell fortress unlocked (we can send soldiers there now)
+turret=1: laser turrets researched
 hell_pit=1: scout the pit mission available
 hell_pit=2: scout the pit done, can secure pit
 hell_pit=3: pit secured

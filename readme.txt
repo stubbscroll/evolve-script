@@ -19,46 +19,52 @@ script v2:
 - vacuum collapse implemented
 - ascension implemented
 - pillar implemented, tested with various races including 4* ultra sludge in
-  heavy gravity and 4* digital ascension (synth, imitate wyvern, +4% power star
-  sign, in antimatter)
+  heavy gravity, 4* digital ascension feat (synth, imitate wyvern, +4% power
+  star sign, in antimatter)
 - demonic infusion, minimal effort implementation. it reuses routines from
-  warlord and plays inefficiently. full run tested with ultra sludge 4*
+  warlord and plays inefficiently. full run tested with 4* ultra sludge and
+  4* balorg without removing terrifying
 - ai apocalypse implemented, tested with various races including sludge in heavy
-  gravity
+  gravity, ultra sludge in micro, balorg without removing terrifying
 - matrix and retirement implemented, tested with hybrid custom in heavy gravity.
   need testing in micro
 - lone survivor implemented, works in antimatter, struggles with power
-  elsewhere (can finish with some user intervention in these cases)
+  elsewhere (can finish with some user intervention)
 - warlord implemented, more testing is desirable (the run is LONG)
 - truepath orbital decay on kamikaze planet implemented, more testing is
   desirable (the run is extremely long)
+- very rudimentary support for steelen and inflation challenges. can only be
+  completed by the script at much higher than normal progression
 * i assume lumber+plywood is eliminated from all runs that go to interstellar
-  or farther, as well as assuming that matter replicator is unlocked
+  or farther, as well as assuming that matter replicator is unlocked. script
+  still managed to finish demonic infusion with lumber/plywood active. script
+  will replicate plywood during embassy construction and otherwise just have a
+  few skilled servants on plywood
+* i also assume that tp4 runs are always done with a suitable custom
 
 roadmap:
-- implement ui for selecting run type, so we don't have to mess with comments
+- implement ui for selecting run type, so we don't have to mess with commenting
+  in and out stuff
 - then make tampermonkey/greasemonkey support so we don't have to copy-paste the
   entire thing
 - check if i need to add more techs to the manual list at the start of truepath
   (might have forgotten some race specific stuff)
-- balorg support in truepath (gene-remove terrifying when playing outside of
-  truepath)
 - in magic, use alchemy to speed up bottlenecks
+- speed up pylons, set the correct level immediately instead of +/-1 per call
 - i've been testing truepath with leo star sign (+4% power bonus). test again
   without the bonus and see if we can still build ships and have enough power
+- the script's current architecture (build max 1 normal building per call) is
+  a major bottleneck on fast runs. change this, i want more speed
 - currently testing:
 - more testing:
   * the aim is to make the script more robust and avoid softlocking in uncommon
     situations. priority on being able to finish a run rather than efficiency
-  - quick demonic infusion in magic
-  - bloodstones farming in micro
-  - try with different races and traits
   - longer runs need more testing (especially warlord)
 - more tweaks to handle some likely situations
   - many skilled servants + low production => handle deficit from crafters
     (brick => cement, wrought iron => iron, sheet metal => aluminium,
     mythril => iridium, aerogel => infernite), currently a small problem in
-    sludge truepath (haven't tested super sludge yet). super sludge 4* in
+    sludge truepath (haven't tested ultra sludge yet). ultra sludge 4* in
     falsepath is fine (so far). ideally i need a better routine for distributing
     crafters (regular and servants) that cares about deficits
 
@@ -68,9 +74,8 @@ not planned:
 - my goal was to be able to farm every resource, and my script supports that
   now. warlord covers supercoiled plasmids, bloodstones, artifacts, changing of
   hybrid custom so no need to implement demonic infusion and apotheosis
-- if i get bored the next time i do demonic infusion or apotheosis i might
-  implement them. but i want an easy way to find the number of tower segments
-  first
+- i did end up implementing demonic infusion. i might implement it the next
+  time i want to do apotheosis but i'm too lazy to play it
 
 usage:
 - do the protoplasm phase manually
@@ -119,7 +124,8 @@ supports:
 - servants and skilled servants (highly recommended to have at least a few)
 
 stuff that's supported:
-- balorg, uses combat to get titanium (not implemented in truepath)
+- balorg, uses combat to get titanium. iridium in start of space is terribly
+  slow as expected (not implemented in truepath)
 - meditation chamber (capybara)
 - smokehouse (carnivore races)
 - slaves (balorg)
