@@ -127,9 +127,18 @@ waygate=3: demon lord defeated
 -------------------------------------------------------------------------------
 normal runs - edenic realm
 
+edenic=2: can build edenic waygate
+edenic=3: can survey meadows
+edenic=4: asphodel meadows unlocked
+hell_lake=7: railway to hell, hell transports buffed by railways
+science=24: dimensional tap, ascension machine buffs eden: encampments increase
+            max omniscience, stabilizers and ghost trappers are more efficient
+elysium=3: attack celestial fortress
+elysium=4: celestial fortress defeated
 elysium=11: elerium containment researched
 isle=1: fire support base completed, isle fortress visible
 isle=2: isle fortress destroyed, piers avaiable for construction
+isle=3: piers built
 palace=1: scout palace unlocked
 palace=2: palace scouted
 palace=3: unlocks isle->tomb of the dead god (megaproject, 10 segments)

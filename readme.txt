@@ -24,6 +24,7 @@ script v2:
 - demonic infusion, minimal effort implementation. it reuses routines from
   warlord and plays inefficiently. full run tested with 4* ultra sludge and
   4* balorg without removing terrifying
+- apotheosis, minimal testing done
 - ai apocalypse implemented, tested with various races including sludge in heavy
   gravity, ultra sludge in micro, balorg without removing terrifying
 - matrix and retirement implemented, tested with hybrid custom in heavy gravity.
@@ -46,7 +47,7 @@ roadmap:
 - implement ui for selecting run type, so we don't have to mess with commenting
   in and out stuff
 - then make tampermonkey/greasemonkey support so we don't have to copy-paste the
-  entire thing
+  entire thing. also to be able to do similar runs in a row unattended
 - check if i need to add more techs to the manual list at the start of truepath
   (might have forgotten some race specific stuff)
 - in magic, use alchemy to speed up bottlenecks
@@ -71,11 +72,10 @@ roadmap:
 not planned:
 - more challenge runs, more resets. tp1-2 can be done by starting ai apocalypse
   and resetting early. em field happens to be possible
-- my goal was to be able to farm every resource, and my script supports that
-  now. warlord covers supercoiled plasmids, bloodstones, artifacts, changing of
-  hybrid custom so no need to implement demonic infusion and apotheosis
-- i did end up implementing demonic infusion. i might implement it the next
-  time i want to do apotheosis but i'm too lazy to play it
+- the script is limited to building one thing per call (around 1 call per
+  second), with some exceptions like mega projects and crates. very high
+  progression spends a lot of time building cheap stuff which slows down
+  progression. fixing this pretty much requires a full rewrite
 
 usage:
 - do the protoplasm phase manually
