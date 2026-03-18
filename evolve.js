@@ -1079,6 +1079,7 @@ function build_structure(list) {
 		'space-triton_mission','space-kuiper_mission','space-eris_mission',
 		'portal-lake_mission','portal-spire_mission','portal-spire_survey',
 		'tauceti-home_mission','tauceti-red_mission','tauceti-dismantle','tauceti-excavate',
+		'portal-shrine','portal-s_alter','portal-meditation',
 		'tauceti-gas_contest-a1','tauceti-gas_contest-a2','tauceti-gas_contest-a3','tauceti-gas_contest-a4','tauceti-gas_contest-a5','tauceti-gas_contest-a6','tauceti-gas_contest-a7','tauceti-gas_contest-a8',
 		'tauceti-gas_contest-b1','tauceti-gas_contest-b2','tauceti-gas_contest-b3','tauceti-gas_contest-b4','tauceti-gas_contest-b5','tauceti-gas_contest-b6','tauceti-gas_contest-b7','tauceti-gas_contest-b8'];
 	if(!Array.isArray(list)) { console.log('build_structure: expected list, got',list); return false; } // must be an array of buildings
@@ -2272,10 +2273,7 @@ function get_crate_cost_stupid(node) {
 	let val=parseInt(str.slice(pos+6));
 	let pos2=str.indexOf(' ',pos+8);
 	let pos3=str.indexOf(' ',pos2+1);
-	let res=str_capitalize(str.substring(pos2+1,pos3-1));
-	if(res=='Amber') res='Stone';
-	else if(res=='Bones') res='Lumber';
-	else if(res=='Boneweave') res='Plywood';
+	let res=canonical_resource(str_capitalize(str.substring(pos2+1,pos3-1)));
 	return [res,val];
 }
 
@@ -2833,7 +2831,9 @@ function matter_replicator_management(resource=null) {
 
 // unicorn shrines
 // build 25 knowledge shrines, then metal shrines
-function build_shrine() {
+// can override type of shrine
+// fixed to work in warlord scenario
+function build_shrine(build=null) {
 	if(!has_trait('magnificent')) return false;
 	if(!building_exists('city','shrine')) return false;
 	let moon=evolve.global.city.calendar.moon;
@@ -2843,20 +2843,25 @@ function build_shrine() {
 	else if(moon<14) bonus='metal';
 	else if(moon<21) bonus='knowledge';
 	else bonus='tax';
-	if(get_building('city','shrine').know<25 && bonus=='knowledge') return build_structure(['city-shrine']);
-	else if(get_building('city','shrine').know>=25 && bonus=='metal') return build_structure(['city-shrine']);
+	if(build==null) {
+		if(get_building('city','shrine').know<25 && bonus=='knowledge') return build_structure(['city-shrine','portal-shrine']);
+		else if(get_building('city','shrine').know>=25 && bonus=='metal') return build_structure(['city-shrine','portal-shrine']);
+	} else if(bonus==build) return build_structure(['city-shrine','portal-shrine']);
 	return false;
 }
 
 // banquet hall
 function banquet_hall() {
-	// i guess synth doesn't need banquet hall
+	// i guess synth doesn't need banquet hall?
 	if(!has_tech('banquet',1) || has_trait('artifical')) return false;
 	// build banquet hall (or upgrades) if we have >100 unborn population
 	// or we're in truepath and have forward base
-	return (get_population()<get_max_population()-100 || has_tech('triton',1)) && city_num('banquet')<5 && build_structure(['city-banquet']);
+	let banquetnum=0;
+	if(city_num('banquet')>0) banquetnum=evolve.global.city.banquet.level;
+	return (get_population()<get_max_population()-100 || has_tech('triton',1)) && banquetnum<5 && build_structure(['city-banquet']);
 }
 
+// supports warlord scenario with altar in hell
 function sacrificial_altar() {
 	if(!has_trait('cannibalize')) return false;
 	if(!has_tech('sacrifice',1)) return false;
@@ -2866,6 +2871,7 @@ function sacrificial_altar() {
 		let a=evolve.global.city.s_alter;
 		if((a.harvest>=10 || !resource_exists('Lumber')) && a.mind>=10 && a.mine>=10 && a.rage>=10 && a.regen>=10) return false;
 		let q=document.getElementById('city-s_alter');
+		if(q==null) q=document.getElementById('portal-s_alter');
 		if(q==null) return false;
 		q.__vue__.action();
 		return true;
@@ -3175,7 +3181,7 @@ function MAD_trade() {
 }
 
 function steelen_trade() {
-	let sell=(evolve.global.race.governor.g.bg=='entrepreneur');
+	let sell=(evolve.global.race.governor?.g?.bg=='entrepreneur');
 	if(!has_tech('high_tech',3) && resource_exists('Steel')) {
 		if(sell) set_trade_routes_percent(['Stone',-50,'Steel',50]);
 		else set_trade_routes_percent(['Steel',100]);
@@ -3183,11 +3189,11 @@ function steelen_trade() {
 		if(sell) set_trade_routes_percent(['Stone',-50,'Steel',25,'Titanium',25]);
 		else set_trade_routes_percent(['Steel',50,'Titanium',50]);
 	} else if(resource_exists('Iridium') && !has_tech('science',11)) {
-		if(sell) set_trade_routes_percent(['Aluminium',-50,'Steel',25,'Iridium',25]);
-		else set_trade_routes_percent(['Steel',50,'Iridium',50]);
+		if(sell) set_trade_routes_percent(['Aluminium',-50,'Steel',16,'Iridium',17,'Titanium',17]);
+		else set_trade_routes_percent(['Steel',33,'Iridium',33,'Titanium',34]);
 	} else {
-		if(sell) set_trade_routes_percent(['Aluminium',-50,'Steel',50]);
-		else set_trade_routes_percent(['Steel',100]);
+		if(sell) set_trade_routes_percent(['Aluminium',-50,'Steel',25,'Titanium',25]);
+		else set_trade_routes_percent(['Steel',50,'Titanium',50]);
 	}
 }
 
@@ -3304,10 +3310,11 @@ function MAD_balorg() {
 	return false;
 }
 
+// also supports warlord scenario with meditation chamber in hell
 function MAD_zen() {
 	// build meditation chambers only if zen power is full
 	if(evolve.global.resource.hasOwnProperty('Zen') && evolve.global.resource.Zen.amount==evolve.global.resource.Zen.max) {
-		if(build_structure(['city-meditation'])) return true;
+		if(build_structure(['city-meditation','portal-meditation'])) return true;
 	}
 	return false;
 }
@@ -3422,7 +3429,7 @@ function MAD_main(governor) {
 	// halt here until we've built vital buildings
 	// also, ensure we have enough steel storage
 	if(building_exists('city','smelter') && get_building_count('city','smelter')>5 && building_exists('city','metal_refinery') && get_resource('Steel').amount<2000 && build_crates()) return true;
-	if(building_exists('city','factory') && get_resource('Steel').max<8000 && build_crate()) return true;
+	if(building_exists('city','factory') && get_resource('Steel').max<8000 && build_crates()) return true;
 	if(city_num('foundry')<num_crafting_materials() && build_structure(['city-foundry'])) return true;
 	if(MAD_vital_buildings(['bank','garrison','silo','shed','cement_plant','foundry','mine','coal_mine','smelter','storage_yard','trade','oil_well','oil_depot','mill','graveyard','soul_well','farm','pylon','lodge'])) return;
 	// build knowledge buildings
@@ -3495,10 +3502,31 @@ function bioseed_build_launch_facility() {
 	return evolve.global.arpa.launch_facility.rank<1 && build_arpa_project('launch_facility');
 }
 
+// increase production of bottleneck element for space probes
+function bioseed_spaceprobe_factory_management() {
+	let num=get_num_factory_production_lines();
+	if(get_factory_production('Nano')>0 || get_factory_production('Lux')>0 || get_factory_production('Furs')>0) {
+		// get rid of all productions that isn't alloy or polymer
+		set_factory_production_percent_check_cap(['Alloy',50,'Polymer',50])
+		return;
+	}
+	let a=get_factory_production('Alloy');
+	let p=get_factory_production('Polymer');
+	let bottle=evolve.global.queue?.queue[0]?.bres;
+	if(bottle=='Alloy') a++,p--;
+	else if(bottle=='Polymer') a--,p++;
+	if(a<0 || p<0 || a>num || p>num) return;
+	set_factory_production(['Alloy',a,'Polymer',p])
+}
+
 function bioseed_factory_management() {
 	// number of factories
-	// TODO include space factories
 	let num=get_num_factory_production_lines();
+	// if we have space probes in queue: set factories to bottleneck element
+	if(evolve.global.queue.queue.length>0 && evolve.global.queue.queue[0].id=='starDock-probes') {
+		bioseed_spaceprobe_factory_management();
+		return;
+	}
 	if(!resource_exists('Nano_Tube')) {
 		// if we don't have polymer, or if launch facility is under production:
 		// set all factories to alloy
@@ -3596,13 +3624,13 @@ function earth_buildings_we_always_want() {
 }
 
 // can't have enough of these buildings
-function bioseed_buildings_we_always_want() {
+function bioseed_buildings_we_always_want(mode) {
 	// missions
 	if(has_tech('high_tech',7) && evolve.global.arpa.launch_facility.rank==1 && !building_exists('space','satellite') && build_structure(['space-test_launch'])) return true;
 	if(has_exact_tech('space',2) && has_tech('space_explore',2) && build_structure(['space-moon_mission'])) return true;
 	if(build_one(['space-moon_base','space-iridium_mine','space-helium_mine','space-propellant_depot'])) return true;
 	if(has_tech('space_explore',3) && !has_tech('space',4) && build_structure(['space-red_mission'])) return true;
-	if(build_one(['space-spaceport','space-living_quarters','space-garage','space-red_mine','space-fabrication','space-biodome','space-red_factory','space-space_barracks'])) return true;
+	if(mode!='betterdead' && build_one(['space-spaceport','space-living_quarters','space-garage','space-red_mine','space-fabrication','space-biodome','space-red_factory','space-space_barracks'])) return true;
 	if(has_tech('space',3) && has_tech('space_explore',3) && !has_tech('hell',1) && build_structure(['space-hell_mission'])) return true;
 	if(build_one(['space-geothermal'])) return true;
 	if(has_exact_tech('space',4) && has_tech('space_explore',4) && build_structure(['space-gas_mission'])) return true;
@@ -3796,8 +3824,9 @@ function build_on_moon_list(list=null) {
 	return build_structure(list);
 }
 
-function bioseed_build_on_red_planet(){
+function bioseed_build_on_red_planet(mode){
 	if(!has_tech('space',4)) return false;
+	if(mode=='betterdead') return false;
 	let max=evolve.global.space.spaceport.s_max;
 	let cur=evolve.global.space.spaceport.support;
 	if(cur>=max) {
@@ -3813,8 +3842,9 @@ function bioseed_build_on_red_planet(){
 	return build_structure(list);
 }
 
-function build_on_red_planet_list(list=null){
+function build_on_red_planet_list(mode,list=null){
 	if(!has_tech('space',4)) return false;
+	if(mode=='betterdead') return false;
 	let max=evolve.global.space.spaceport.s_max;
 	let cur=evolve.global.space.spaceport.support;
 	if(cur>=max) {
@@ -3826,7 +3856,8 @@ function build_on_red_planet_list(list=null){
 }
 
 // during bioseed ship phase: build fabrications only (for mythril)
-function bioseed_build_fabrications_on_red_planet() {
+function bioseed_build_fabrications_on_red_planet(mode) {
+	if(mode=='betterdead') return false;
 	let max=evolve.global.space.spaceport.s_max;
 	let cur=evolve.global.space.spaceport.support;
 	if(cur>=max) {
@@ -3851,7 +3882,7 @@ function bioseed_build_on_belt() {
 	let max=evolve.global.space.space_station.count*3*return_pop_modifier();
 	let cur=evolve.global.space.space_station.support;
 	// max-1 because elerium ships use 2 support
-	if(cur+1>=max*return_pop_modifier()) return build_structure(['space-space_station']);
+	if(cur+return_pop_modifier()>=max*return_pop_modifier()) return build_structure(['space-space_station']);
 	return build_structure(['space-elerium_ship']);;
 }
 
@@ -3927,12 +3958,12 @@ function bioseed_main(mode) {
 			if(['Polymer','Alloy','Iridium','Chrysotile'].includes(q.bres)) matter_replicator_management(q.bres);
 			else matter_replicator_management();
 		}
-		set_factory_production_percent_check_cap(['Alloy',50,'Polymer',50]);
+		bioseed_factory_management();
 		if(finish_unfinished_arpa_project()) return true;
 		if(build_structure(['city-factory','space-red_factory'])) return true;
 		if(build_structure(['city-basic_housing','city-cottage','city-farm','city-apartment','city-lodge','city-foundry'])) return true;
 		if(build_structure(['city-mill','city-windmill','city-coal_power','city-oil_power','city-fission_power'])) return true;
-		if(bioseed_build_fabrications_on_red_planet()) return true;
+		if(bioseed_build_fabrications_on_red_planet(mode)) return true;
 		if(MAD_change_government(null,'corpocracy')) return true;
 		if(build_crates()) return true;
 		return;
@@ -3955,12 +3986,12 @@ function bioseed_main(mode) {
 	if(finish_unfinished_arpa_project()) return true;
 	if(bioseed_build_2_monuments()) return true;
 	// build most buildings
-	if(bioseed_buildings_we_always_want()) return true;
+	if(bioseed_buildings_we_always_want(mode)) return true;
 	if(build_shrine()) return true;
 	if(bioseed_build_launch_facility()) return true;
 	// these planets need support
 	if(bioseed_build_on_moon()) return true;
-	if(bioseed_build_on_red_planet()) return true;
+	if(bioseed_build_on_red_planet(mode)) return true;
 	if(bioseed_build_on_sun()) return true;
 	if(bioseed_build_on_belt()) return true;
 	if(has_tech('gov_fed',1) && MAD_change_government(null,'federation')) return;
@@ -4068,13 +4099,13 @@ function interstellar_replicator_management() {
 }
 
 function build_world_collider() {
-	if(evolve.global.space.world_collider.count==1859) return false;
+	if(evolve.global.space?.world_collider?.count==1859) return false;
 	return build_big_structure('space-world_collider',1859);
 }
 
 function interstellar_factory_management() {
 	let num=get_num_factory_production_lines();
-	if(evolve.global.space.world_collider.count<1859) {
+	if(evolve.global.space?.world_collider?.count!=1859) {
 		// world collider not done, set factories to mostly alloy and a bit of the
 		// rest
 		let polymer=4,nanotubes=4;
@@ -4628,7 +4659,7 @@ function interstellar_main(reset_type) {
 	if(!has_tech('science',11)) {
 		interstellar_manage_population();
 		if(interstellar_hell_management(reset_type)) return true;
-		if(bioseed_build_on_red_planet()) return true;
+		if(bioseed_build_on_red_planet(reset_type)) return true;
 		if(earth_buildings_we_always_want()) return true;
 		if(build_world_collider()) return true;
 		if(interstellar_build_on_belt()) return true;
@@ -4643,14 +4674,14 @@ function interstellar_main(reset_type) {
 	// calibrated sensors: start building mana syphons i guess
 	// TODO should probably build up infernite production a bit? more carports,
 	// more sensor drones
-	if(has_tech('infernite',4) && reset_type=='blackhole' && evolve.global.race.universe=='magic' && evolve.global.portal?.fortress?.patrols>0 && has_tech('veil',2)) {
+	if(has_tech('infernite',4) && (reset_type=='blackhole' || reset_type=='betterdead') && evolve.global.race.universe=='magic' && evolve.global.portal?.fortress?.patrols>0 && has_tech('veil',2)) {
 console.log('vacuum collapse reset');
 		interstellar_manage_population();
 		if(interstellar_build_on_belt()) return true;
 		if(build_arpa_project('syphon')) return true;
 		if(interstellar_hell_management(reset_type)) return true;
 		if(finish_unfinished_arpa_project()) return true;
-		if(bioseed_build_on_red_planet()) return true;
+		if(bioseed_build_on_red_planet(reset_type)) return true;
 		if(bioseed_build_on_moon()) return true;
 		if(interstellar_buildings_we_always_want()) return true;
 		if(earth_buildings_we_always_want()) return true;
@@ -4664,7 +4695,7 @@ console.log('vacuum collapse reset');
 	// if we're doing blackhole outside of magic, or doing a higher reset
 	// build stellar engine, build mass ejectors
 	// wait until we have entered hell
-	if((evolve.global.race.universe!='magic' || reset_type!='blackhole') && evolve.global.portal?.fortress?.patrols>0 && has_exact_tech('blackhole',3) && interstellar_num('g_factory')>=5) {
+	if((evolve.global.race.universe!='magic' || (reset_type!='blackhole' && reset_type!='betterdead')) && evolve.global.portal?.fortress?.patrols>0 && has_exact_tech('blackhole',3) && interstellar_num('g_factory')>=5) {
 console.log('build stellar engine');
 		// maybe build up production first (adamantite, graphene, neutronium,
 		// infernite)
@@ -4682,7 +4713,7 @@ console.log('build stellar engine');
 		// also surviving)
 		if(interstellar_hell_management(reset_type)) return true;
 		if(finish_unfinished_arpa_project()) return true;
-		if(bioseed_build_on_red_planet()) return true;
+		if(bioseed_build_on_red_planet(reset_type)) return true;
 		if(bioseed_build_on_moon()) return true;
 		if(interstellar_buildings_we_always_want()) return true;
 		if(earth_buildings_we_always_want()) return true;
@@ -4693,7 +4724,7 @@ console.log('build stellar engine');
 		if(build_storage_if_capped(MAD_capped_list.union(bioseed_capped_list).union(interstellar_capped_list))) return true;
 		return build_crates();
 	}
-	if(evolve.global.race.universe!='magic' && reset_type=='blackhole' && has_tech('blackhole',4)) {
+	if(evolve.global.race.universe!='magic' && (reset_type=='blackhole' || reset_type=='betterdead') && has_tech('blackhole',4)) {
 console.log('black hole reset');
 		// in antimatter: caps are too high, toss manually
 		if(evolve.global.race.universe=='antimatter') {
@@ -4724,7 +4755,7 @@ console.log('black hole reset');
 		if((evolve.global.race.universe!='antimatter' || interstellar_num('mass_ejector')==0) && build_structure(['interstellar-mass_ejector'])) return true;
 		if(interstellar_hell_management(reset_type)) return true;
 		if(finish_unfinished_arpa_project()) return true;
-		if(bioseed_build_on_red_planet()) return true;
+		if(bioseed_build_on_red_planet(reset_type)) return true;
 		if(bioseed_build_on_moon()) return true;
 		if(interstellar_buildings_we_always_want()) return true;
 		if(earth_buildings_we_always_want()) return true;
@@ -4755,7 +4786,7 @@ console.log('before wormhole');
 		if(build_structure(['interstellar-mass_ejector'])) return true;
 		if(interstellar_hell_management(reset_type)) return true;
 		if(finish_unfinished_arpa_project()) return true;
-		if(bioseed_build_on_red_planet()) return true;
+		if(bioseed_build_on_red_planet(reset_type)) return true;
 		if(bioseed_build_on_moon()) return true;
 		if(interstellar_buildings_we_always_want()) return true;
 		if(earth_buildings_we_always_want()) return true;
@@ -4775,7 +4806,7 @@ console.log('before stellar engine');
 	// it's andromeda_bot's responsibility to build wormhole
 	if(interstellar_build_on_belt()) return true;
 	if(finish_unfinished_arpa_project()) return true;
-	if(bioseed_build_on_red_planet()) return true;
+	if(bioseed_build_on_red_planet(reset_type)) return true;
 	if(bioseed_build_on_moon()) return true;
 	if(interstellar_hell_management(reset_type)) return true;
 	if(interstellar_buildings_we_always_want()) return true;
@@ -4800,6 +4831,17 @@ function blackhole_bot() {
 	// t3 and beyond don't want to wait for genesis=3
 	else if(!has_tech('high_tech',11)) bioseed_main();
 	else interstellar_main('blackhole');
+}
+
+// 'blackhole' parameter also for magic and vacuum collapse
+function betterdead_bot() {
+	// if we're in a scenario, just call the correct bot
+	if(evolve.global.race.hasOwnProperty('warlord')) return warlord_bot();
+	if(evolve.global.race.hasOwnProperty('lone_survivor')) return lone_survivor_bot();
+	if(in_mad_land()) MAD_main('sports');
+	// t3 and beyond don't want to wait for genesis=3
+	else if(!has_tech('high_tech',10)) bioseed_main('betterdead');
+	else interstellar_main('betterdead');
 }
 
 //---------------------------------------------------
@@ -5001,6 +5043,32 @@ function andromeda_wish(reset_type) {
 	return false;
 }
 
+// send ships away from gateway
+function fix_andromeda_ships_early() {
+	let d=evolve.global.galaxy.defense;
+	let g=d.gxy_gateway;
+	if(g.scout_ship>0) {
+		// send all scout ships to gorddon
+		for(let i=0;i<g.scout_ship;i++) andromeda_add_ship(2,0);
+	}
+	if(g.corvette_ship>0) {
+		// send all corvettes to gorddon
+		for(let i=0;i<g.corvette_ship;i++) andromeda_add_ship(2,1);
+	}
+	if(g.frigate_ship>0) {
+		// send all frigates to gorddon
+		for(let i=0;i<g.frigate_ship;i++) andromeda_add_ship(2,2);
+	}
+	if(g.cruiser_ship>0) {
+		// send 1 cruiser to stargate
+		let num=g.cruiser_ship;
+		// TODO check if we have 25 defense platforms
+		if(d.gxy_stargate.cruiser_ship==0) andromeda_add_ship(1,3),num--;
+		// send remaining cruisers to gorddon
+		for(let i=0;i<num;i++) andromeda_add_ship(2,3);
+	}
+}
+
 // this routine takes over after stellar engine has been built
 // and stops after we're established in chthonian (1 dreadnought in system 5,
 // maybe 2 dreadnoughts in chthonian)
@@ -5190,7 +5258,7 @@ function andromeda_early_main(mode) {
 			if(low==100 && build_arpa_project('roid_eject')) return true;
 			if(research_given_techs(new Set(['bolognium_crates','bolognium_containers','bolognium_vaults','repair_droids','transmutation']))) return true;
 		}
-		// move small ships from gorddon to gateway
+		// move small ships from gorddon to gateway	
 		if(evolve.global.galaxy.defense.gxy_gorddon.scout_ship>0) {
 			andromeda_remove_ship(2,0);
 			return true;
@@ -5419,7 +5487,7 @@ function andromeda_early_main(mode) {
 		// beacons that we are in danger of dying
 		if(get_building_count('portal','war_droid')<10 && build_structure(['portal-war_droid'])) return true;
 		// build some more dreadnoughts, but only if we already can fill some jobs
-		if(mode!='dreaded' && get_building_count('galaxy','dreadnought')<3 && !has_free_worker_slots(['cement_worker','craftsman'])) {
+		if(mode!='dreaded' && get_building_count('galaxy','dreadnought')<4 && !has_free_worker_slots(['cement_worker','craftsman'])) {
 			// check support
 			let cur=evolve.global.galaxy.starbase.support;
 			let max=evolve.global.galaxy.starbase.s_max;
@@ -5890,8 +5958,10 @@ function ascend_main(reset_type) {
 		if(get_power_minus_replicator()>250 && build_structure(['portal-gate_turret','portal-infernite_mine'])) return true;
 		if(build_storage_if_capped(['galaxy-scavenger','portal-gate_turret','portal-base_camp'])) return true;
 		if(hell_spire_buildings()) return true;
-		if(build_structure(['portal-arcology','interstellar-luxury_condo'])) return true;
+		if(build_structure(['portal-arcology','interstellar-luxury_condo','portal-harbor'])) return true;
 		if(can_afford_arpa('stock_exchange')==100 && build_arpa_project('stock_exchange')) return true;
+		if(hell_num('harbor')>0 && hell_num('cooling_tower')<40 && build_structure(['portal-cooling_tower'])) return true;
+		if(hell_num('harbor')>0 && hell_build_transports()) return true;
 		if(build_cheap_swarm_satellites()) return true;
 		warlord_mech_management('apotheosis');
 		warlord_transport_cargo('Neutronium');
@@ -5995,6 +6065,7 @@ function ascend_main(reset_type) {
 // actually, much of the code is under warlord
 
 // sometimes andromeda ships crap out and all are sent to gateway
+// (i guess because not enough gateway support)
 // this results in knowledge cap tanking because we lose the symposium
 // and tech scavenger bonuses
 // production of vitreloy, bolognium, orichalcum etc also tanks
@@ -6017,6 +6088,7 @@ function fix_andromeda_ships_late() {
 	if(g.cruiser_ship>0) {
 		// send 1 cruiser to stargate
 		let num=g.cruiser_ship;
+		// TODO check if we have 25 defense platforms
 		if(d.gxy_stargate.cruiser_ship==0) andromeda_add_ship(1,3),num--;
 		// send remaining cruisers to gorddon
 		for(let i=0;i<num;i++) andromeda_add_ship(2,3);
@@ -6046,6 +6118,29 @@ function mech_station_select(val) {
 	return true;
 }
 
+function ascension_machine() {
+	// build ascension machine after we have occult researcher
+	if(has_tech('science',23)) {
+		if(has_exact_tech('ascension',2) && build_structure(['interstellar-sirius_mission'])) return true;
+		if(has_exact_tech('ascension',3) && build_structure(['interstellar-sirius_b'])) return true;
+		if(has_exact_tech('ascension',4) && build_big_structure('interstellar-space_elevator',100)) return true;
+		if(has_exact_tech('ascension',5) && build_big_structure('interstellar-gravity_dome',100)) return true;
+		if(has_tech('ascension',6)) {
+			// only build thermal collectors after we've pillared
+			if(evolve.global.pillars[evolve.global.race.species]) {
+				// if em field is active, build up to 100 thermal collectors
+				if(interstellar_num('thermal_collector')<(evolve.global.race.emfield==1?100:67) && build_structure(['interstellar-thermal_collector'])) return true;
+			}
+			if(build_big_structure('interstellar-ascension_machine',99)) return true;
+			if(interstellar_num('thermal_collector')>=(evolve.global.race.emfield==1?100:67)) {
+				if(build_big_structure('interstellar-ascension_machine',100)) return true;
+				// extra thermal collectors make ascension machine buffs better
+				if(get_resource('Omniscience').max<=25000 && build_structure(['interstellar-thermal_collector'])) return true;
+			}
+		}
+	}
+}
+
 // TODO chrysotile is a big bottleneck throughout
 // should probably do something about it
 function apotheosis_main() {
@@ -6073,7 +6168,7 @@ function apotheosis_main() {
 	andromeda_set_smelter();
 	fix_andromeda_ships_late();
 	// always build population buildings on mars
-	if(build_on_red_planet_list(['space-living_quarters','space-biodome'])) return true;
+	if(build_on_red_planet_list(null,['space-living_quarters','space-biodome'])) return true;
 	// always build knowledge buildings capped by knowledge
 	if(build_structure(['city-wardenclyffe','city-biolab','space-satellite','interstellar-far_reach'])) return true;
 	if(build_on_moon_list(['space-observatory'])) return true;
@@ -6087,9 +6182,12 @@ function apotheosis_main() {
 	// encampments cost chrysotyle which is extremely slow. script builds anything
 	// else that's cheaper first, so it takes ages for the first one to be built
 	// TODO be wary of spending soul gems from now on
-	if(!has_tech('elysium',2)) {
+	// wait with celestial fortress until omniscience cap is 18k
+	if(!has_tech('elysium',2) || (resource_exists('Omniscience') && get_resource('Omniscience').max<19000)) {
 		console.log('apotheosis');
-		let need_quarry=(get_resource('Omniscience').max<19000);
+		let need_quarry=0;
+		if(resource_exists('Omniscience')) need_quarry=(get_resource('Omniscience').max<19000);
+		else need_quarry=1;
 		if(get_resource('Wrought_Iron').amount<2000000) interstellar_manage_population('Wrought_Iron','none',need_quarry);
 		else interstellar_manage_population('Mythril','none',need_quarry);
 		matter_replicator_management('Brick');
@@ -6104,7 +6202,7 @@ function apotheosis_main() {
 		// build rectories up to some sensible limit
 		if(eden_num('rectory')<15 && build_structure(['eden-rectory'])) return true;
 		// build stuff, but after we've raised omniscience cap
-		if(get_resource('Omniscience').max>19000) {
+		if(resource_exists('Omniscience') && get_resource('Omniscience').max>19000) {
 			if(build_structure(['portal-purifier','portal-port','portal-base_camp','portal-mechbay'])) return true;
 			if(get_power_minus_replicator()>500 && build_structure(['portal-harbor'])) return true;
 			if(build_structure(['portal-cooling_tower','portal-inferno_power'])) return true;
@@ -6123,13 +6221,13 @@ function apotheosis_main() {
 		// after we've built up asphodel meadows a bit (we have some stabilizers and
 		// asphodel production sucks less), stop building stuff and
 		// research a few outstanding techs (purification, railway to hell)
-		if(get_resource('Omniscience').max>19000 && eden_num('stabilizer')>7 && (!has_tech('hell_spire',11) || !has_tech('hell_lake',7))) {
+		if(resource_exists('Omniscience') && get_resource('Omniscience').max>19000 && eden_num('stabilizer')>7 && (!has_tech('hell_spire',11) || !has_tech('hell_lake',7))) {
 			// don't build on eden
 			console.log('don\'t build');
 		} else {
 			// build stuff on eden, but wait with bunkers until omniscience cap is high enough
 			list2=['eden-soul_engine','eden-ectoplasm_processor','eden-research_station','eden-asphodel_harvester'];
-			if(eden_num('bunker')<5 && get_resource('Omniscience').max<19000) list2.add('eden-bunker');
+			if(resource_exists('Omniscience') && eden_num('bunker')<5 && get_resource('Omniscience').max<19000) list2.push('eden-bunker');
 			if(eden_build_asphodel(['eden-corruptor','eden-warehouse'],list2)) return true;
 		}
 		// wait with rune gate until we have built up asphodel meadows a bit
@@ -6142,26 +6240,7 @@ function apotheosis_main() {
 		if(resource_exists('Omniscience') && get_resource('Omniscience').amount>=get_resource('Omniscience').max*0.999) {
 			if(build_big_structure('eden-rune_gate',100)) return true;
 		}
-		// build ascension machine after we have dimensional tap
-		if(has_tech('science',24)) {
-			if(has_exact_tech('ascension',2) && build_structure(['interstellar-sirius_mission'])) return true;
-			if(has_exact_tech('ascension',3) && build_structure(['interstellar-sirius_b'])) return true;
-			if(has_exact_tech('ascension',4) && build_big_structure('interstellar-space_elevator',100)) return true;
-			if(has_exact_tech('ascension',5) && build_big_structure('interstellar-gravity_dome',100)) return true;
-			if(has_tech('ascension',6)) {
-				// only build thermal collectors after we've pillared
-				if(evolve.global.pillars[evolve.global.race.species]) {
-					// if em field is active, build up to 100 thermal collectors
-					if(interstellar_num('thermal_collector')<(evolve.global.race.emfield==1?100:67) && build_structure(['interstellar-thermal_collector'])) return true;
-				}
-				if(build_big_structure('interstellar-ascension_machine',99)) return true;
-				if(interstellar_num('thermal_collector')>=(evolve.global.race.emfield==1?100:67)) {
-					if(build_big_structure('interstellar-ascension_machine',100)) return true;
-					// extra thermal collectors make ascension machine buffs better
-					if(get_resource('Omniscience').max<=19000 && build_structure(['interstellar-thermal_collector'])) return true;
-				}
-			}
-		}
+		if(ascension_machine()) return true;
 		return build_crates();		
 	}
 	// apotheosis continuation
@@ -6172,6 +6251,7 @@ function apotheosis_main() {
 		let pillbox_num=(!has_tech('isle',2)?10:0);
 		console.log('beyond asphodel');
 		if(research_tech(tech_avoid_safeguard)) return true;
+		if(research_given_techs(new Set(['stabilize_blackhole']))) return true;
 		set_factory_production_percent_check_cap(['Alloy',30,'Stanene',10,'Nano',20,'Polymer',20,'Lux',10,'Furs',10]);
 		// craft sheet metal when building piers
 		// craft wrought iron otherwise (for elysanite mines)
@@ -6209,6 +6289,8 @@ function apotheosis_main() {
 		// stop building harbors during spirit vacuum phase, save up cement
 		if(get_power_minus_replicator()>500 && !has_tech('isle',1) && build_structure(['portal-harbor'])) return true;
 		if(build_structure(['portal-inferno_power'])) return true;
+		// build ascension machine when we have researched dimensional tap
+		if(ascension_machine()) return true;
 		// don't build the asphodel buildings that cost soul gems
 		// except asphodel harvesters which are cheap
 		// also, don't build bunkers
@@ -6264,6 +6346,8 @@ function apotheosis_main() {
 			if(eden_build_asphodel(['eden-warehouse'],['eden-ectoplasm_processor','eden-soul_engine'])) return true;
 			if(build_asteroid_minus_deuterium()) return true;
 			// elysanite dyson sphere is probably mandatory in magic
+			// not needed at all in antimatter
+			// not sure about other universes
 			// bottlenecks are asphodel powder and chrysotile
 			// it costs 7.5 hours to build, the alternative is being down on spirit vacuums
 			// currently only built in magic, allow in other universes if power becomes a problem
@@ -6278,8 +6362,8 @@ function apotheosis_main() {
 				if(build_big_structure('eden-mech_station',10)) return true;
 				if(build_big_structure('interstellar-elysanite_sphere',1000)) return true;
 			} else {
-				// turn off mech stations
-				mech_station_select(0);
+				// turn off mech stations if they exist
+				if(eden_num('mech_station')==10) mech_station_select(0);
 			}
 		}
 		if(has_tech('palace',1) && !has_tech('palace',2) && build_structure(['eden-scout_palace'])) return true;
@@ -6301,10 +6385,13 @@ function apotheosis_main() {
 			// build restaurants to increase morale (and elysanite production)
 			if(evolve.global.city.morale.potential<evolve.global.city.morale.cap) {
 				if(build_structure(['eden-restaurant'])) return true;
+				if(build_shrine('morale')) return true;
 			} else {
 				// morale capped, build monuments
 				if(build_monument_if_morale_capped()) return true;
 			}
+			// build population buildings for more scavengers, build slave pens, temples
+			if(build_structure(['city-basic_housing','city-apartment','city-farm','city-slave_pen','interstellar-habitat','galaxy-dormitory','city-temple'])) return true;
 			if(build_structure(['portal-hell_forge','portal-inferno_power','eden-rectory'])) return true;
 			if(eden_build_asphodel([],['eden-ectoplasm_processor','eden-soul_engine'])) return true;
 			if(build_big_structure('eden-conduit',25)) return true;
@@ -6433,6 +6520,10 @@ function apotheosis_bot() {
 // code for lone survivor, farming runs in antimatter
 //---------------------------------------------------
 
+// BUG, script sometimes overbuilds on new earth which causes science labs to have
+// no support. this gets the script stuck. only happened once in ~80 runs
+// in general the scripts haven't been very robust when it comes to not overbuilding
+
 // use a custom with smart (mandatory), intelligent, lawless,
 // production and mining buffs and a bunch of garbage
 // traits that don't have an effect here
@@ -6450,13 +6541,14 @@ function apotheosis_bot() {
 // inherit wish and ocular powers (compare with 2x wish)
 // 4920 days with inherit wish and empowered
 // 3489 days after doing almost 20 runs, still tusked custom, inherit wish, ocular powers
+// 3162 days with slightly different custom with tusked/wish that inherits itself (wish)
 
 // discord recommends synthetic, but that either requires A LOT more spatial
 // than i have (i'm at 116k plasmids, 47k anti-plasmids, 8.7k phage, 38 pillars)
 // or another method than contact for womlings. introduction is bad because it
 // costs titanium which is slow. TODO check if subjugate is viable
 
-// i guess there are 2 sets of fanaticism and antropology depending on transcendence?
+// i guess there are 2 sets of fanaticism and anthropology depending on transcendence?
 // only tested with transcendence 2
 let LS_researches_1=new Set(['fanaticism','alt_fanaticism','alt_anthropology','replicator','outpost_boost','minor_wish','governor','ancient_theology','major_wish','deify','deify_alt']);
 let LS_researches_2=new Set(['tau_cultivation','tau_manufacturing']);
@@ -6473,7 +6565,7 @@ indoctrination -> missionary -> zealotry
 study ancients -> genetic encoding (boosts exo labs, useless?)
 genetic infusion (boosts ziggurats, useless)
 lodge, windmill
-space whaling (can replicate oil when close to 0)
+space whaling (can replicate oil instead when close to 0)
 womling logistics (comes too late)
 advanced material synthesis (no need to actually produce quantium)
 */
@@ -7140,6 +7232,8 @@ function lone_survivor_bot() {
 // 62500 days: first spirit vacuum built (several spirit batteries built before that)
 // next run took 68540 days, spire level 91
 
+// last run took 45k days, spire level 84
+
 // wendigo, wendigo, djinn i guess (ghostly r4 is fantastic, wish is great)
 // planets: ashland still good for cement i guess, eden for elemental (power)
 
@@ -7664,6 +7758,9 @@ function warlord_assign_population(craft,mode=null) {
 	apply_population_changes(craft,jobs);
 }
 
+// in 1.4.9, sacrificial altar, shrines, meditation chambers were moved from city to portal
+// aim to support both locations just in case
+// TODO fix shrines
 function warlord_bot() {
 	if(evolve.global.race.hasOwnProperty('lone_survivor')) return lone_survivor_bot();
 	if(!evolve.global.race.hasOwnProperty('warlord')) {
@@ -7729,8 +7826,8 @@ function warlord_bot() {
 		if(build_desired_buildings(desired1)) return true;
 		if(build_structure(['portal-hovel','portal-dig_demon','portal-brute','portal-pumpjack'])) return true;
 		// TODO shrines should be all in metal production, knowledge is bad here
-		if(build_shrine()) return true;
-		if(has_trait('calm') && build_structure(['city-meditation'])) return true;
+		if(build_shrine('metal')) return true;
+		if(has_trait('calm') && build_structure(['city-meditation','portal-meditation'])) return true;
 		return build_crates();
 	}
 	// build more twisted labs, build demon tunnelers, incinerators, dens of sin
@@ -7743,8 +7840,8 @@ function warlord_bot() {
 		assign_population('Wrought_Iron',true,true);
 		if(build_desired_buildings(desired2)) return true;
 		if(build_structure(['portal-hovel','portal-dig_demon','portal-brute','portal-pumpjack','portal-tunneler'])) return true;
-		if(build_shrine()) return true;
-		if(has_trait('calm') && build_structure(['city-meditation'])) return true;
+		if(build_shrine('metal')) return true;
+		if(has_trait('calm') && build_structure(['city-meditation','portal-meditation'])) return true;
 		return build_crates();
 	}
 	// build up more until we have researched minions
@@ -7755,8 +7852,8 @@ function warlord_bot() {
 		matter_replicator_management('Infernite');
 		assign_population('Wrought_Iron',true,true);
 		if(warlord_build_buildings_we_want()) return;
-		if(build_shrine()) return true;
-		if(has_trait('calm') && build_structure(['city-meditation'])) return true;
+		if(build_shrine('metal')) return true;
+		if(has_trait('calm') && build_structure(['city-meditation','portal-meditation'])) return true;
 		return build_crates();
 	}
 	// we have minions, fortresses appear now i guess
@@ -7778,6 +7875,10 @@ function warlord_bot() {
 		else if(!has_tech('steel_container',8)) matter_replicator_management('Nanoweave');
 		else if(resource_exists('Plywood') && get_resource('Plywood').amount<1000000) matter_replicator_management('Plywood');
 		else matter_replicator_management('Infernite');
+		if(resource_exists('Infernite') && get_resource('Infernite').max<251000 && build_structure(['portal-warehouse'])) return true;
+		if(get_power_minus_replicator()>100 && build_structure(['portal-soul_attractor'])) return true;
+		// soul reapers cost soul gems, but they are extremely good
+		if(build_structure(['portal-incinerator','portal-minions','portal-reaper','portal-codex'])) return true;
 		// at some point we stop making anything and wait for codex
 		// it doesn't want to happen on its own
 		// also, avoid the potential softlock when 3 fortresses suddenly arrive and
@@ -7785,13 +7886,11 @@ function warlord_bot() {
 		if(hell_num('soul_forge')==1 && hell_num('soul_attractor')>=5 && can_afford_at_max('portal','codex','prtl_badlands')) {
 			return build_structure(['portal-codex']);
 		}
-		// soul reapers cost soul gems, but they are extremely good
-		if(build_structure(['portal-minions','portal-reaper','portal-codex'])) return true;
 		if(warlord_build_buildings_we_want()) return true;
 		if(hell_num('soul_forge')<1 && get_power_minus_replicator()>30 && build_structure(['portal-soul_forge'])) return true;
 		if(build_storage_if_capped(['portal-incinerator'])) return true;
-		if(build_shrine()) return true;
-		if(has_trait('calm') && build_structure(['city-meditation'])) return true;
+		if(build_shrine('metal')) return true;
+		if(has_trait('calm') && build_structure(['city-meditation','portal-meditation'])) return true;
 		// buy supercolliders when we can afford fully i guess
 		// this spends our stock of polymer, so no more twisted labs for a while
 		if(can_afford_arpa('lhc')==100) return build_arpa_project('lhc');
@@ -7803,8 +7902,10 @@ function warlord_bot() {
 		set_factory_production_percent_check_cap(['Alloy',8,'Stanene',8,'Nano',8,'Polymer',8,'Lux',50,'Furs',18]);
 		tax_morale_balance(0,55,100);
 		set_ocular_power(['d','t','p']);
-		// set crafters to sheet metal for more demon forges and more crafters
-		assign_population('Sheet_Metal',true,true);
+		// if authority is not at max, craft mythril for brute huts
+		// otherwise set crafters to sheet metal for more demon forges and more crafters
+		if(evolve.global.resource.Authority.amount<evolve.global.resource.Authority.max && can_afford_at_max('portal','brute','prtl_wasteland')) assign_population('Mythril',true,true);
+		else assign_population('Sheet_Metal',true,true);
 		// if we don't have nanoweave containers, replicate nanoweave
 		// also avoid running out of polymer
 		if(get_resource('Polymer').amount<20000) matter_replicator_management('Polymer');
@@ -7819,8 +7920,8 @@ function warlord_bot() {
 		if(build_structure(['portal-hell_forge','portal-inferno_power'])) return true;
 		if(warlord_build_buildings_we_want()) return true;
 		if(build_storage_if_capped(['portal-incinerator','portal-tunneler'])) return true;
-		if(build_shrine()) return true;
-		if(has_trait('calm') && build_structure(['city-meditation'])) return true;
+		if(build_shrine('metal')) return true;
+		if(has_trait('calm') && build_structure(['city-meditation','portal-meditation'])) return true;
 		if(!can_afford_at_max('portal','harbor','prtl_lake') && build_structure(['portal-warehouse'])) return true;
 		if(evolve.global.arpa.lhc.rank<55 && can_afford_arpa('lhc')==100) return build_arpa_project('lhc');
 		return build_crates();
@@ -7864,8 +7965,8 @@ function warlord_bot() {
 		if(build_structure(['portal-harbor','portal-inferno_power'])) return true;
 		if(warlord_build_buildings_we_want()) return true;
 		if(build_storage_if_capped(['portal-incinerator','portal-tunneler','portal-shadow_mine'])) return true;
-		if(build_shrine()) return true;
-		if(has_trait('calm') && build_structure(['city-meditation'])) return true;
+		if(build_shrine('metal')) return true;
+		if(has_trait('calm') && build_structure(['city-meditation','portal-meditation'])) return true;
 		if(!can_afford_at_max('portal','harbor','prtl_lake') && build_structure(['portal-warehouse'])) return true;
 		if(can_afford_arpa('lhc')==100) return build_arpa_project('lhc');
 		if(get_production('Oil')<0 && build_structure(['portal-pumpjack'])) return true;
@@ -8001,8 +8102,8 @@ function warlord_bot() {
 		if(hell_num('harbor')>0 && build_structure(['portal-cooling_tower'])) return true;
 		if(hell_num('harbor')>0 && hell_build_transports()) return true;
 		if(build_structure(['portal-harbor','portal-inferno_power','portal-corpse_pile'])) return true;
-		if(build_shrine()) return true;
-		if(has_trait('calm') && build_structure(['city-meditation'])) return true;
+		if(build_shrine('metal')) return true;
+		if(has_trait('calm') && build_structure(['city-meditation','portal-meditation'])) return true;
 		if(evolve.global.resource.Authority.max==evolve.global.resource.Authority.amount) {
 			if(can_afford_arpa('monument')==100 && build_arpa_project('monument')) return true;
 		}
@@ -8038,9 +8139,9 @@ function warlord_bot() {
 		if(eden_num('infuser')<25 && eden_num('conduit')==25) warlord_assign_population('Wrought_Iron','graphene');
 		else assign_population('Wrought_Iron',true,true);
 		// before isle:
+		// replicate nanoweave for 1 pillbox
 		// whenever we can build soul attractors, replicate aerogel
 		// if we need to raise elerium cap for elerium cannon, replicate aerogel for elerium containment
-		// replicate nanoweave for 3 pillboxes
 		// then replicate infernite until max cap, then vitreloy
 		// after isle:
 		// replicate aerogel for elerium containment until we have 6 spirit vacuums
@@ -8052,9 +8153,9 @@ function warlord_bot() {
 		else if(has_tech('isle',5) && eden_num('spirit_vacuum')<6 && can_afford_at_max('eden','elerium_containment','eden_elysium') && !can_afford_at_max('eden','spirit_vacuum','eden_isle') && get_power_minus_replicator()>settings.spirit_vacuum_power_buffer+spirit_vacuum_power()) matter_replicator_management('Aerogel');
 		else if(has_tech('isle',5) && eden_num('spirit_vacuum')==6 && !can_afford_at_max('eden','spirit_battery','eden_isle') && eden_num('soul_compactor')==0) matter_replicator_management('Scarletite');
 		else if(has_tech('isle',5) && can_afford_at_max('eden','spirit_battery','eden_isle')) matter_replicator_management('Vitreloy');
+		else if(has_tech('elysium',5) && !has_tech('isle',2) && eden_num('pillbox')<1 && !has_tech('isle',2)) matter_replicator_management('Nanoweave');
 		else if(!has_tech('isle',5) && can_afford_at_max('portal','soul_attractor','prtl_pit')) matter_replicator_management('Aerogel');
 		else if(has_tech('elysium',11) && !can_afford_at_max('eden','fire_support_base','eden_elysium')) matter_replicator_management('Aerogel');
-		else if(has_tech('elysium',5) && eden_num('pillbox')<3 && !has_tech('isle',2)) matter_replicator_management('Nanoweave');
 		else if(get_resource('Infernite').amount<get_resource('Infernite').max*0.999) matter_replicator_management('Infernite');
 		else matter_replicator_management('Vitreloy');
 		// build spire buildings freely now
@@ -8072,8 +8173,8 @@ function warlord_bot() {
 		// stop building harbors during spirit vacuum phase, save up cement
 		if(!has_tech('isle',1) && build_structure(['portal-harbor'])) return true;
 		if(build_structure(['portal-inferno_power'])) return true;
-		if(build_shrine()) return true;
-		if(has_trait('calm') && build_structure(['city-meditation'])) return true;
+		if(build_shrine('metal')) return true;
+		if(has_trait('calm') && build_structure(['city-meditation','portal-meditation'])) return true;
 		if(evolve.global.resource.Authority.max==evolve.global.resource.Authority.amount) {
 			// don't build monument if it costs cement
 			let z=arpa_project_costs('monument');
@@ -9531,9 +9632,9 @@ function TP_orbital_decay_main() {
 				return true;
 			}
 			// build elerium storage to push exotic labs higher
-			if(evolve.global.space.spaceport.support<evolve.global.space.spaceport.s_max && !can_afford_at_max('space','exotic_lab')) {
+			if(evolve.global.space.spaceport.support<evolve.global.space.spaceport.s_max && !can_afford_at_max2('space-exotic_lab')) {
 				// don't go overboard in case exotic labs get capped on something else than elerium
-				if(bioseed_num('elerium_contain')<30 && build_structure('space-elerium_contain')) return true;
+				if(bioseed_num('elerium_contain')<30 && build_structure(['space-elerium_contain'])) return true;
 			}
 			// build supercolliders, depots, stock exchanges, railways
 			// no monuments if morale < morale cap
@@ -9954,7 +10055,6 @@ function TP_tauceti_main(reset_type) {
 		if(bioseed_buildings_we_always_want()) return true;
 		if(bioseed_build_on_moon()) return true;
 		if(bioseed_build_on_red_planet()) return true;
-		if(bioseed_buildings_we_always_want()) return true;
 		if(bioseed_build_on_sun()) return true;
 		if(TP_build_on_belt_after_kuiper()) return true;
 		if(TP_build_on_titan()) return true;
@@ -10324,13 +10424,13 @@ function retirement_bot() {
 //setInterval(MAD_bot, 1000);              // setup runs
 //setInterval(bioseed_bot, 1000);
 //setInterval(blackhole_bot, 1000);        // farm dark energy i guess
-setInterval(ascend_bot, 1000);           // farm harmony crystals
+//setInterval(ascend_bot, 1000);           // farm harmony crystals
 //setInterval(pillar_bot, 1000);           // farm pillars
 //setInterval(demonic_bot, 1000);          // farm artifacts
 //setInterval(bloodstones_bot, 1000);      // farm bloodstones
 //setInterval(apotheosis_bot, 1000);       // farm s.plasmids, bloodstones, change hybrid custom
 //setInterval(ai_apocalypse_bot, 1000);    // farm imitations, ai cores
-//setInterval(matrix_bot, 1000);           // farm (skilled) servants
+setInterval(matrix_bot, 1000);           // farm (skilled) servants
 //setInterval(retirement_bot, 1000);       // farm (skilled) servants
 //setInterval(lone_survivor_bot, 1000);    // farm antiplasmids, phage, servants
 //setInterval(warlord_bot, 800);           // farm s.plasmids, blood stones, artifacts, change hybrid custom
@@ -10339,3 +10439,4 @@ setInterval(ascend_bot, 1000);           // farm harmony crystals
 // specific achievement runs:
 //setInterval(dreaded_bot, 1000);           // ascend + dreaded achievement
 //setInterval(banana_bot, 1000);           // ascend + banana republic
+//setInterval(betterdead_bot, 1000);        // better dead than red
